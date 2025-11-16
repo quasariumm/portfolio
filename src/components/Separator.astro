@@ -1,11 +1,15 @@
 ---
 interface Props {
-    color?: string;
+    line_color?: string;
+    text_color?: string;
 }
 
-const { color = "--color-accent" } = Astro.props;
+const { line_color = "--color-accent", text_color = "--color-primary" } = Astro.props;
 ---
 
-<div class="my-8 w-full h-2 flex justify-center items-center">
-    <div class={`rounded-xs h-full w-[50%] bg-(${color}) dark:bg-(${color}-dark)`}></div>
+<div class="my-16 w-full h-2 flex justify-center items-center">
+    <div 
+        class="rounded-xs h-full w-[50%]" 
+        style={`background-color: var(${line_color}); @media (prefers-color-scheme: dark) { background-color: var(${line_color}-dark); }`}
+    ></div>
 </div>

@@ -32,22 +32,43 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
       </div>
     )
   }
-  <div class="flex flex-col gap-2 flex-1">
-    <!-- Category -->
-    {
-      post.data.category && (
+  <div
+    class="bg-(--color-surface) dark:bg-(--color-surface-dark) border-4 border-(--color-border) dark:border-(--color-border-dark) rounded-4xl p-4"
+  >
+    <div class="flex flex-col gap-2 flex-1">
+      <div
+        class="h-32 mb-2 border-b-4 border-b-(--color-accent) dark:border-b-(--color-accent-dark) relative -left-4 flex justify-start"
+        style="width: calc(100% + var(--spacing) * 8)"
+      >
+        <!-- Category -->
+        {
+          post.data.category && (
+            <div class="flex items-start gap-2">
+              <a
+                class="text-xs text-accent dark:text-accent-dark pl-4 z-10"
+                href={`/blog/category/${post.data.category?.toLowerCase().replace(/\s+/g, "-") || "uncategorized"}`}
+              >
+                <span class="px-3 py-1 text-xs rounded-full bg-primary/80 dark:bg-primary-dark/80 text-crust dark:text-crust-dark border border-primary/90 dark:border-primary-dark/90">
+                  {post.data.category}
+                </span>
+              </a>
+            </div>
+          )
+        }
+
         <a
-          class="text-xs text-accent dark:text-accent-dark"
-          href={`/blog/category/${post.data.category.toLowerCase()}`}
+          href={`/blog/${post.id}/`}
+          class="flex flex-col gap-3 h-full"
+          aria-label={`Read article: ${post.data.title}`}
         >
-          <div class="flex items-center gap-2">
-            <span class="px-3 py-1 text-xs rounded-full bg-primary/10 dark:bg-primary-dark/10 text-primary dark:text-primary-dark border border-primary/20 dark:border-primary-dark/20">
-              {post.data.category}
-            </span>
-          </div>
+          <img
+            src="/TestBanner.png"
+            class="z-9 absolute -inset-[4px] object-cover mask-clip-border border-4 border-white/0 rounded-t-4xl"
+            style="height: calc(100% + 4 * var(--spacing) + 8px); width: calc(100% + 8px); top: calc(-4 * var(--spacing) - px); max-width: 200% !important"
+          />
         </a>
-      )
-    }
+      </div>
+    </div>
 
     <a
       href={`/blog/${post.id}/`}
@@ -93,21 +114,6 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
       <time datetime={post.data.pubDate.toISOString()}>
         <FormattedDate date={post.data.pubDate} />
       </time>
-      {
-        post.data.readingTime && (
-          <>
-            <span aria-hidden="true">•</span>
-            <span class="flex items-center gap-1">
-              <Icon
-                name="mdi:clock-outline"
-                class="w-3.5 h-3.5"
-                aria-hidden="true"
-              />
-              {post.data.readingTime}
-            </span>
-          </>
-        )
-      }
     </div>
   </div>
 </article>

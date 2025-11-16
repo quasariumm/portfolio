@@ -4,13 +4,17 @@ import BlogCard from '@/components/BlogCard.astro'
 import Pagination from '@/components/Pagination.astro'
 import BaseLayout from '@/layouts/Layout.astro'
 
-const allPosts: CollectionEntry<"blog">[] = await getCollection('blog', ({ data }) => {
+export const allPosts: CollectionEntry<"blog">[] = await getCollection('blog', ({ data }) => {
 	return data.draft !== true
 })
 
-const posts = allPosts.sort(
+export const posts = allPosts.sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 )
+
+export function getPost(name: string) {
+	return posts.find((post) => post.data.title === name);
+}
 
 const currentPage = 1
 const pageSize = 9
@@ -44,9 +48,7 @@ const page = {
 				Blog
 			</h1>
 			<p class="md:w-2/3 text-lg leading-relaxed text-secondary dark:text-secondary-dark">
-				Welcome to my blog! Here you'll find a collection of my thoughts and
-				experiences. I hope you enjoy reading them as much as I enjoy writing
-				them.
+				Welcome to my blog! Here you can read about projects I worked on and experiences I had.
 			</p>
 		</div>
 	</main>

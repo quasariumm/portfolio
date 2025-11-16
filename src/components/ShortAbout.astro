@@ -19,20 +19,38 @@ const { name } = Astro.props;
       <h1 class="text-5xl font-semibold mb-1">{name}</h1>
       <div class="subtitle-holder">
         <h2 class="mb-2 text-(--color-accent)">Graphics programmer</h2>
-        <p class="text">Student at Breda University of Applied Sciences. Experience with both rasterised and raytraced pipelines on PC, Pi and PS5.</p>
+        <p class="text">
+          Student at Breda University of Applied Sciences. Experience with both
+          rasterised and raytraced pipelines on PC, Pi and PS5.
+        </p>
       </div>
       <div class="links flex items-center justify-start mt-4 gap-4">
-        <IconLink link={"https://github.com/quasariumm"} icon={github} alt="GitHub" />
-        <IconLink link={"https://www.linkedin.com/in/patrick-vreeburg-2b94a6325/"} icon={linkedin} alt="LinkedIn" />
-        <IconLink link={"https://quasariumm.itch.io/"} icon={itchio} alt="Itch" />
+        <IconLink
+          link={"https://github.com/quasariumm"}
+          icon={github}
+          alt="GitHub"
+        />
+        <IconLink
+          link={"https://www.linkedin.com/in/patrick-vreeburg-2b94a6325/"}
+          icon={linkedin}
+          alt="LinkedIn"
+        />
+        <IconLink
+          link={"https://quasariumm.itch.io/"}
+          icon={itchio}
+          alt="Itch"
+        />
       </div>
     </div>
-    <img src={profilePicture.src} alt="trueberryless" class="pfp w-3xs h-3xs rounded-full border-3 border-solid border-(--color-accent) dark:border-(--color-accent-dark)" />
+    <img
+      src={profilePicture.src}
+      alt="trueberryless"
+      class="pfp w-3xs h-3xs rounded-full border-3 border-solid border-(--color-accent) dark:border-(--color-accent-dark)"
+    />
   </div>
 </section>
 
 <style>
-
   .pfp {
     transition:
       transform 0.3s ease,
@@ -62,10 +80,17 @@ const { name } = Astro.props;
     opacity: 0.8;
   }
 
-  @media (max-width: 45rem) {
+  @media (max-width: 60rem) {
     .intro {
-      padding: 4rem 2rem 3rem;
-      margin-top: 3rem;
+      padding: 5rem 6rem 1.5rem 6rem !important;
+      margin-top: 3rem !important;
+    }
+  }
+
+  @media (max-width: 52rem) {
+    .intro {
+      padding: 4rem 2rem 3rem !important;
+      margin-top: 3rem !important;
     }
 
     .content {
