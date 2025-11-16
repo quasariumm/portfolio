@@ -1,0 +1,14 @@
+---
+interface Props {
+  link: string;
+  icon: ImageMetadata;
+  alt: string;
+  new_tab?: boolean;
+}
+
+const { link, icon, alt, new_tab = true } = Astro.props;
+---
+
+<a href={link} target={new_tab ? "_blank" : "_self"} class="size-[2rem]">
+    <img src={icon.src} alt={alt} class={"w-full h-full"} />
+</a>

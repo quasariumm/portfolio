@@ -1,0 +1,11 @@
+---
+interface Props {
+    color?: string;
+}
+
+const { color = "--color-accent" } = Astro.props;
+---
+
+<div class="my-8 w-full h-2 flex justify-center items-center">
+    <div class={`rounded-xs h-full w-[50%] bg-(${color}) dark:bg-(${color}-dark)`}></div>
+</div>

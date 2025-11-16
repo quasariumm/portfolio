@@ -1,0 +1,90 @@
+---
+import profilePicture from "@/assets/pfpsquarefullres.JPG";
+import IconLink from "./IconLink.astro";
+
+import github from "../assets/github.svg";
+import linkedin from "../assets/linkedin.svg";
+import itchio from "../assets/itchio.svg";
+
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+---
+
+<section class="intro flex justify-center mt-24 pt-8 px-2 pb-6">
+  <div class="content max-w-3xl w-full flex items-center g-2">
+    <div class="text">
+      <h1 class="text-5xl font-semibold mb-1">{name}</h1>
+      <div class="subtitle-holder">
+        <h2 class="mb-2 text-(--color-accent)">Graphics programmer</h2>
+        <p class="text">Student at Breda University of Applied Sciences. Experience with both rasterised and raytraced pipelines on PC, Pi and PS5.</p>
+      </div>
+      <div class="links flex items-center justify-start mt-4 gap-4">
+        <IconLink link={"https://github.com/quasariumm"} icon={github} alt="GitHub" />
+        <IconLink link={"https://www.linkedin.com/in/patrick-vreeburg-2b94a6325/"} icon={linkedin} alt="LinkedIn" />
+        <IconLink link={"https://quasariumm.itch.io/"} icon={itchio} alt="Itch" />
+      </div>
+    </div>
+    <img src={profilePicture.src} alt="trueberryless" class="pfp w-3xs h-3xs rounded-full border-3 border-solid border-(--color-accent) dark:border-(--color-accent-dark)" />
+  </div>
+</section>
+
+<style>
+
+  .pfp {
+    transition:
+      transform 0.3s ease,
+      border-color 0.3s ease;
+  }
+
+  .pfp:hover {
+    transform: scale(1.05);
+    border-color: var(--color-mauve);
+  }
+
+  .text {
+    flex: 1;
+  }
+
+  h1 {
+    color: var(--color-subtext1);
+  }
+
+  h2 {
+    font-weight: 500 !important;
+  }
+
+  p {
+    font-size: 1rem;
+    color: var(--color-subtext1);
+    opacity: 0.8;
+  }
+
+  @media (max-width: 45rem) {
+    .intro {
+      padding: 4rem 2rem 3rem;
+      margin-top: 3rem;
+    }
+
+    .content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .pfp {
+      margin-top: 2rem;
+      width: 10rem;
+      height: 10rem;
+    }
+
+    .links {
+      justify-content: center !important;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
