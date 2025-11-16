@@ -12,6 +12,21 @@ const canonicalURL = new URL(pathname === '/' ? '/' : pathname, site.url).toStri
 const ogImage = image || `${site.url}/og/${url || 'home'}.png`;
 ---
 
+<!-- Prevent flash of unstyled content (FOUC) -->
+<script is:inline>
+  // This runs BEFORE the page renders
+  (function() {
+    // Check for saved theme preference or default to dark
+    const theme = localStorage.getItem('theme') || 'dark';
+    
+    if (theme === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  })();
+</script>
+
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
