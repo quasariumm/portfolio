@@ -36,9 +36,11 @@ const projects = defineCollection({
 		link_github: z.string().optional(),
 		link_itch: z.string().optional(),
 		link_steam: z.string().optional(),
-		// Other
+		// Game-specific
 		version: z.string().optional(),
-		engine: z.string().optional()
+		language: z.string().optional(),
+		engine: z.string().optional(),
+		authors: z.string().array().optional(),
 	})
 })
 

@@ -1,0 +1,21 @@
+---
+interface Props {
+    version: string | undefined,
+    language: string | undefined,
+    engine: string | undefined,
+    authors: string[] | undefined
+}
+
+const { version, language, engine, authors } = Astro.props
+---
+
+<div class="w-full flex flex-col p-4 rounded-lg border border-border dark:border-border-dark">
+    <h2 class="text-xs font-semibold uppercase tracking-wide mb-3 text-foreground dark:text-foreground-dark">Details</h2>
+    { version && <p><span class="text-green dark:text-green-dark">Version</span>: {version}</p> }
+    { language && <p><span class="text-teal dark:text-teal-dark">Language</span>: {language}</p> }
+    { engine && <p><span class="text-sky dark:text-sky-dark">Engine</span>: {engine}</p> }
+    { authors && <p><span class="text-sapphire dark:text-sapphire-dark">Authors</span>:<br/>{authors.map((author) => {
+        var a = author.split('|');
+        return <span>-  {a[0]} (Role: {a[1]})</span><br/>;
+    })}</p> }
+</div>

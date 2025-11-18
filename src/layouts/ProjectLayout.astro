@@ -21,12 +21,17 @@ const {
 	remarkPluginFrontmatter,
 	category,
 	tags,
+	version,
+	language,
+	engine,
+	authors,
 } = Astro.props
 
 import BaseLayout from '@/layouts/Layout.astro'
 import { Image } from 'astro:assets'
 import { Icon } from 'astro-icon/components'
 import { site } from '@/config/site'
+import ProjectDetails from '@/components/ProjectDetails.astro'
 
 // Generate OG image URL for this project
 const ogImageUrl = `projects/${slug.replace('.md', '')}`
@@ -68,10 +73,12 @@ const categorySlug = category?.toLowerCase().replace(/\s+/g, '-') || 'uncategori
 			>
 				<aside class="md:w-1/4 relative" aria-label="Table of contents">
 					<div class="sticky top-0 md:top-28 hidden lg:block">
-						<TableOfContents headings={headings} />
+						<div class="flex flex-col gap-4">
+							<TableOfContents headings={headings} />
+						</div>
 					</div>
 				</aside>
-				<div class="grow w-full md:max-w-[75ch]">
+				<div class="grow w-full md:max-w-[100ch]">
 					<header class="space-y-6">
 						<h1 class="text-4xl sm:text-5xl lg:text-6xl leading-tight font-black">
 							{title}
@@ -145,6 +152,7 @@ const categorySlug = category?.toLowerCase().replace(/\s+/g, '-') || 'uncategori
 								</div>
 							)
 						}
+						<ProjectDetails version={version} language={language} engine={engine} authors={authors} />
 					</header>
 					<div
 						class="prose prose-neutral prose-lg md:prose-xl dark:prose-invert prose-img:rounded-2xl prose-figure:text-center prose-img:mx-auto prose-img:shadow-lg prose-headings:font-bold prose-a:text-primary dark:prose-a:text-primary-dark prose-a:underline prose-a:decoration-2 prose-a:decoration-primary/40 dark:prose-a:decoration-primary-dark/40 prose-a:underline-offset-2 hover:prose-a:decoration-primary dark:hover:prose-a:decoration-primary-dark mt-12"
