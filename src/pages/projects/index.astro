@@ -1,0 +1,75 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content'
+import ProjectCard from '@/components/ProjectCard.astro'
+import Pagination from '@/components/Pagination.astro'
+import BaseLayout from '@/layouts/Layout.astro'
+
+export const allProjects: CollectionEntry<"projects">[] = await getCollection('projects', ({ data }) => {
+	return data.draft !== true
+})
+
+export const projects = allProjects.sort(
+	(a, b) => b.data.releaseDate.valueOf() - a.data.releaseDate.valueOf()
+)
+
+export function getProject(name: string) {
+	return projects.find((project) => project.data.title === name);
+}
+
+const currentPage = 1
+const pageSize = 9
+const totalPages = Math.ceil(projects.length / pageSize)
+const paginatedProjects = projects.slice(0, pageSize)
+
+const page = {
+	data: paginatedProjects,
+	start: 0,
+	end: Math.min(pageSize - 1, projects.length - 1),
+	size: pageSize,
+	total: projects.length,
+	currentPage: 1,
+	lastPage: totalPages,
+	url: {
+		current: '/projects',
+		prev: undefined,
+		next: totalPages > 1 ? '/projects/2' : undefined,
+	}
+}
+---
+
+<BaseLayout 
+	title="Projects" 
+	description="Here you can see all projects I have done."
+	nextUrl={page.url.next}
+>
+	<main class="app-container pt-32 pb-16">
+		<div class="space-y-4">
+			<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+				Projects
+			</h1>
+			<p class="md:w-2/3 text-lg leading-relaxed text-secondary dark:text-secondary-dark">
+				Here you can see all projects I have done.
+			</p>
+		</div>
+	</main>
+
+	<section class="app-container pb-20" aria-label="Projects">
+		<ul class="posts-grid-container" role="list">
+			{
+				page.data.map((project) => (
+					<li>
+						<ProjectCard project={project} />
+					</li>
+				))
+			}
+		</ul>
+
+		<!-- Pagination Controls -->
+		<Pagination
+			currentPage={currentPage}
+			totalPages={totalPages}
+			prevUrl={page.url.prev}
+			nextUrl={page.url.next}
+		/>
+	</section>
+</BaseLayout>

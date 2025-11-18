@@ -14,6 +14,10 @@ export const WebsiteLinks = [
 		url: '/',
 	},
 	{
+		name: 'Projects',
+		url: '/projects',
+	},
+	{
 		name: 'Blog',
 		url: '/blog',
 	}

@@ -3,17 +3,18 @@ import Featured from '@/components/Featured.astro';
 import Separator from '@/components/Separator.astro';
 import ShortAbout from '@/components/ShortAbout.astro';
 import BlogCard from '@/components/BlogCard.astro';
-import { getPost, posts } from '@/pages/blog/index.astro';
+import { getPost } from '@/pages/blog/index.astro';
 import Layout from '@/layouts/Layout.astro';
+import ProjectCard from '@/components/ProjectCard.astro';
+import { getProject } from './projects/index.astro';
 ---
 
 <Layout>
 	<ShortAbout name='Patrick Vreeburg' />
 	<Separator />
 	<Featured>
-		<BlogCard post={getPost("TypeScript Type Guards: Your Code's Bouncer")} />
-		<BlogCard post={getPost("TypeScript Type Guards: Your Code's Bouncer")} />
-		<BlogCard post={getPost("TypeScript Type Guards: Your Code's Bouncer")} />
+		<ProjectCard project={getProject("Azura")} />
+		<ProjectCard project={getProject("Melvin")} />
 	</Featured>
 	<Separator />
 </Layout>
