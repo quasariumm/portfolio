@@ -3,10 +3,10 @@ interface Props {
     version: string | undefined,
     language: string | undefined,
     engine: string | undefined,
-    authors: string[] | undefined
+    developers: string[] | undefined
 }
 
-const { version, language, engine, authors } = Astro.props
+const { version, language, engine, developers } = Astro.props
 ---
 
 <div class="w-full flex flex-col p-4 rounded-lg border border-border dark:border-border-dark">
@@ -14,7 +14,7 @@ const { version, language, engine, authors } = Astro.props
     { version && <p><span class="text-green dark:text-green-dark">Version</span>: {version}</p> }
     { language && <p><span class="text-teal dark:text-teal-dark">Language</span>: {language}</p> }
     { engine && <p><span class="text-sky dark:text-sky-dark">Engine</span>: {engine}</p> }
-    { authors && <p><span class="text-sapphire dark:text-sapphire-dark">Authors</span>:<br/>{authors.map((author) => {
+    { developers && <p><span class="text-sapphire dark:text-sapphire-dark">Authors</span>:<br/>{developers.map((author) => {
         var a = author.split('|');
         return <span>-  {a[0]} (Role: {a[1]})</span><br/>;
     })}</p> }

@@ -3,6 +3,11 @@ import { type CollectionEntry } from "astro:content";
 import FormattedDate from "@/components/FormattedDate.astro";
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
+import IconLink from "./IconLink.astro";
+
+import github from "../assets/github.svg";
+import itchio from "../assets/itchio.svg";
+import steam from "../assets/steam.svg";
 
 type Props = {
 	project: CollectionEntry<'projects'> | undefined
@@ -25,7 +30,7 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
 
 <article class="h-full group">
   <div
-    class="bg-(--color-surface) dark:bg-(--color-surface-dark) border-4 border-(--color-border) dark:border-(--color-border-dark) rounded-4xl p-4"
+    class="relative bg-(--color-surface) dark:bg-(--color-surface-dark) border-4 border-(--color-border) dark:border-(--color-border-dark) rounded-4xl p-4"
   >
     <div class="flex flex-col gap-2 flex-1">
       <div
@@ -76,7 +81,7 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
         {project?.data.title}
       </h3>
       <p
-        class="line-clamp-2 text-subtext-1 dark:text-subtext-1-dark leading-relaxed text-sm"
+        class="line-clamp-2 mb-2 text-subtext-1 dark:text-subtext-1-dark leading-relaxed text-sm"
       >
         {project?.data.description}
       </p>
@@ -109,6 +114,12 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
       <time datetime={project?.data.releaseDate.toISOString()}>
         <FormattedDate date={project?.data.releaseDate} />
       </time>
+    </div>
+
+    <div class="absolute flex flex-row-reverse gap-4 right-3 bottom-3">
+      { project?.data.link_github && <IconLink link={project?.data.link_github} icon={github} alt="GitHub link" /> }
+      { project?.data.link_itch && <IconLink link={project?.data.link_itch} icon={itchio} alt="Itch.io link" /> }
+      { project?.data.link_steam && <IconLink link={project?.data.link_steam} icon={steam} alt="Steam link" /> }
     </div>
   </div>
 </article>

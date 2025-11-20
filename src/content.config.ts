@@ -40,7 +40,7 @@ const projects = defineCollection({
 		version: z.string().optional(),
 		language: z.string().optional(),
 		engine: z.string().optional(),
-		authors: z.string().array().optional(),
+		developers: z.string().array().optional(),
 	})
 })
 
