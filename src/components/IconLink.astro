@@ -1,14 +1,16 @@
 ---
+import { Icon } from 'astro-icon/components';
+
 interface Props {
   link: string;
-  icon: ImageMetadata;
+  icon_name: string; // File relative to src/icons (without svg extension)
   alt: string;
   new_tab?: boolean;
 }
 
-const { link, icon, alt, new_tab = true } = Astro.props;
+const { link, icon_name, alt, new_tab = true } = Astro.props;
 ---
 
-<a href={link} target={new_tab ? "_blank" : "_self"} class="size-[2rem]">
-    <img src={icon.src} alt={alt} class={"w-full h-full"} />
+<a href={link} target={new_tab ? "_blank" : "_self"} class="size-[2rem] text-black dark:text-white" aria-label={alt}>
+    <Icon name={icon_name} class="icon w-full h-full text-black dark:text-white" aria-hidden="true" />
 </a>

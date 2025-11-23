@@ -2,10 +2,6 @@
 import profilePicture from "@/assets/pfpsquarefullres.JPG";
 import IconLink from "./IconLink.astro";
 
-import github from "../assets/github.svg";
-import linkedin from "../assets/linkedin.svg";
-import itchio from "../assets/itchio.svg";
-
 interface Props {
   name: string;
 }
@@ -27,17 +23,17 @@ const { name } = Astro.props;
       <div class="links flex items-center justify-start mt-4 gap-4">
         <IconLink
           link={"https://github.com/quasariumm"}
-          icon={github}
+          icon_name="github"
           alt="GitHub"
         />
         <IconLink
           link={"https://www.linkedin.com/in/patrick-vreeburg-2b94a6325/"}
-          icon={linkedin}
+          icon_name="linkedin"
           alt="LinkedIn"
         />
         <IconLink
           link={"https://quasariumm.itch.io/"}
-          icon={itchio}
+          icon_name="itchio"
           alt="Itch"
         />
       </div>

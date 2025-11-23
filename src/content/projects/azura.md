@@ -6,6 +6,8 @@ releaseDate: 'Jun 27 2025'
 category: 'BUas Team'
 tags: ['buas', 'team-project', 'game', 'rts', 'unreal-engine']
 link_itch: 'https://buas.itch.io/team-gotham'
+link_steam: 'https://buas.itch.io/team-gotham'
+link_github: 'https://buas.itch.io/team-gotham'
 version: '1.0'
 language: 'Blueprint / C++'
 engine: 'Unreal Engine'

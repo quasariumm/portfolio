@@ -5,10 +5,6 @@ import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
 import IconLink from "./IconLink.astro";
 
-import github from "../assets/github.svg";
-import itchio from "../assets/itchio.svg";
-import steam from "../assets/steam.svg";
-
 type Props = {
 	project: CollectionEntry<'projects'> | undefined
 }
@@ -117,9 +113,9 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
     </div>
 
     <div class="absolute flex flex-row-reverse gap-4 right-3 bottom-3">
-      { project?.data.link_github && <IconLink link={project?.data.link_github} icon={github} alt="GitHub link" /> }
-      { project?.data.link_itch && <IconLink link={project?.data.link_itch} icon={itchio} alt="Itch.io link" /> }
-      { project?.data.link_steam && <IconLink link={project?.data.link_steam} icon={steam} alt="Steam link" /> }
+      { project?.data.link_github && <IconLink link={project?.data.link_github} icon_name="github" alt="GitHub link" /> }
+      { project?.data.link_itch && <IconLink link={project?.data.link_itch} icon_name="itchio" alt="Itch.io link" /> }
+      { project?.data.link_steam && <IconLink link={project?.data.link_steam} icon_name="steam" alt="Steam link" /> }
     </div>
   </div>
 </article>
