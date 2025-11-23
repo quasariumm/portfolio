@@ -23,13 +23,11 @@ const categorySlug =
   post?.data.category?.toLowerCase().replace(/\s+/g, "-") || "uncategorized";
 const firstTag = post?.data.tags?.[0];
 const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
-
-console.log(coverImagePath);
 ---
 
-<article class="h-full group">
+<article class="h-full w-full group">
   <div
-    class="bg-(--color-surface) dark:bg-(--color-surface-dark) border-4 border-(--color-border) dark:border-(--color-border-dark) rounded-4xl p-4"
+    class="relative bg-(--color-surface) dark:bg-(--color-surface-dark) border-4 border-(--color-border) dark:border-(--color-border-dark) rounded-4xl p-4"
   >
     <div class="flex flex-col gap-2 flex-1">
       <div
@@ -75,12 +73,12 @@ console.log(coverImagePath);
       aria-label={`Read article: ${post?.data.title}`}
     >
       <h3
-        class="text-xl font-semibold group-hover:text-primary dark:group-hover:text-primary-dark transition-colors duration-150 line-clamp-2"
+        class="text-xl font-semibold group-hover:text-primary dark:group-hover:text-primary-dark transition-colors duration-150 line-clamp-1"
       >
         {post?.data.title}
       </h3>
       <p
-        class="line-clamp-2 mb-2 text-subtext-1 dark:text-subtext-1-dark leading-relaxed text-sm"
+        class="line-clamp-2 mb-12 text-subtext-1 dark:text-subtext-1-dark leading-relaxed text-sm"
       >
         {post?.data.description}
       </p>
@@ -89,7 +87,7 @@ console.log(coverImagePath);
     <!-- Tags (show first 4) -->
     {
       post?.data.tags && post?.data.tags.length > 0 && (
-        <div class="flex items-center gap-2 flex-wrap">
+        <div class="absolute bottom-9 flex items-center gap-2 flex-wrap">
           {post?.data.tags.slice(0, 4).map((tag: string) => (
             <a
               class="text-xs text-accent dark:text-accent-dark"
@@ -108,7 +106,7 @@ console.log(coverImagePath);
     }
 
     <div
-      class="flex items-center gap-3 mt-auto text-xs text-subtext-1 dark:text-subtext-1-dark"
+      class="absolute bottom-3 flex items-center gap-3 mt-auto text-xs text-subtext-1 dark:text-subtext-1-dark"
     >
       <time datetime={post?.data.pubDate.toISOString()}>
         <FormattedDate date={post?.data.pubDate} />
