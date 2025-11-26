@@ -41,6 +41,7 @@ const projects = defineCollection({
 		language: z.string().optional(),
 		engine: z.string().optional(),
 		developers: z.string().array().optional(),
+		grade: z.coerce.number().optional()
 	})
 })
 

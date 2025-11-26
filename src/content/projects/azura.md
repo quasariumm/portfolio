@@ -24,5 +24,6 @@ developers: [
     'Ella van der Gastel|Concept Art, UI & Modelling Artist',
     'Jonatan Žižek|Animation, VFX & Rigging Artist'
 ]
+grade: 78
 ---
 Content TODO

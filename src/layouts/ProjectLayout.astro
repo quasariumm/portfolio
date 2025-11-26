@@ -25,6 +25,7 @@ const {
 	language,
 	engine,
 	developers,
+	grade,
 } = Astro.props
 
 import BaseLayout from '@/layouts/Layout.astro'
@@ -152,7 +153,7 @@ const categorySlug = category?.toLowerCase().replace(/\s+/g, '-') || 'uncategori
 								</div>
 							)
 						}
-						<ProjectDetails version={version} language={language} engine={engine} developers={developers} />
+						<ProjectDetails version={version} language={language} engine={engine} developers={developers} grade={grade} />
 					</header>
 					<div
 						class="prose prose-neutral prose-lg md:prose-xl dark:prose-invert prose-img:rounded-2xl prose-figure:text-center prose-img:mx-auto prose-img:shadow-lg prose-headings:font-bold prose-a:text-primary dark:prose-a:text-primary-dark prose-a:underline prose-a:decoration-2 prose-a:decoration-primary/40 dark:prose-a:decoration-primary-dark/40 prose-a:underline-offset-2 hover:prose-a:decoration-primary dark:hover:prose-a:decoration-primary-dark mt-12"
