@@ -8,6 +8,7 @@ import { remarkModifiedTime } from './src/plugins/remark-modified-time.mjs'
 import icon from 'astro-icon';
 import serviceWorker from 'astrojs-service-worker';
 import sitemap from '@astrojs/sitemap';
+import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
@@ -37,6 +38,12 @@ export default defineConfig({
     },
 
     site: 'http://localhost:4321',
+
+    output: 'server',
+
+    adapter: node({
+	mode: 'middleware',
+    }),
 
     vite: {
         plugins: [tailwindcss()],

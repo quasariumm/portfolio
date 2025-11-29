@@ -5,6 +5,7 @@ import Pagination from '@/components/Pagination.astro'
 import BaseLayout from '@/layouts/Layout.astro'
 import type { GetStaticPaths, Page } from 'astro'
 
+export const prerender = true;
 export const getStaticPaths: GetStaticPaths = async () => {
 	const allProjects: CollectionEntry<"projects">[] = await getCollection('projects', ({ data }) => {
 		return data.draft !== true

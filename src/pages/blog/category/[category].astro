@@ -4,6 +4,7 @@ import BlogCard from '@/components/BlogCard.astro'
 import BaseLayout from '@/layouts/Layout.astro'
 import { Icon } from 'astro-icon/components'
 
+export const prerender = true;
 export async function getStaticPaths() {
 	const allPosts: CollectionEntry<"blog">[] = await getCollection('blog', ({ data }) => {
 		return data.draft !== true

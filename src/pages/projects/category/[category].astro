@@ -4,6 +4,7 @@ import BaseLayout from '@/layouts/Layout.astro'
 import { Icon } from 'astro-icon/components'
 import ProjectCard from '@/components/ProjectCard.astro'
 
+export const prerender = true;
 export async function getStaticPaths() {
 	const allProjects: CollectionEntry<"projects">[] = await getCollection('projects', ({ data }) => {
 		return data.draft !== true

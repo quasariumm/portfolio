@@ -4,6 +4,7 @@ import ProjectLayout from '@/layouts/ProjectLayout.astro'
 import type { MarkdownHeading } from 'astro'
 import { render } from 'astro:content'
 
+export const prerender = true;
 export async function getStaticPaths() {
 	const projects = await getCollection('projects')
 	const headings = await Promise.all(
