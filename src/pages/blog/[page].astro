@@ -4,6 +4,7 @@ import BlogCard from '@/components/BlogCard.astro'
 import Pagination from '@/components/Pagination.astro'
 import BaseLayout from '@/layouts/Layout.astro'
 import type { GetStaticPaths, Page } from 'astro'
+import { blog } from '@/config/page'
 
 export const prerender = true;
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -55,8 +56,9 @@ const totalPages = page.lastPage || 1
 ---
 
 <BaseLayout 
-	title={`Blog${currentPage > 1 ? ` - Page ${currentPage}` : ''}`} 
-	description="Welcome to my blog! Here you'll find a collection of my thoughts and experiences."
+	title={`Blog${currentPage > 1 ? ` - Page ${currentPage}` : ''} - Patrick Vreeburg`} 
+	description={blog.description}
+	url={blog.url}
 	prevUrl={page.url.prev}
 	nextUrl={page.url.next}
 >

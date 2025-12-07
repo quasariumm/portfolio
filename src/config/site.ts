@@ -30,6 +30,10 @@ export const SocialLinks = [
 	},
 	{
 		name: 'LinkedIn',
-		url: 'https://www.linkedin.com/in/patrick-vreeburg-2b94a6325/',
+		url: 'https://www.linkedin.com/in/patrick-vreeburg/',
+	},
+	{
+		name: 'Itch.io',
+		url: "https://quasariumm.itch.io/"
 	}
 ]

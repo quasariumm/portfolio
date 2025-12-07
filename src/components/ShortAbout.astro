@@ -1,6 +1,7 @@
 ---
 import profilePicture from "@/assets/pfpsquarefullres.JPG";
 import IconLink from "./IconLink.astro";
+import { SocialLinks } from "@/config/site";
 
 interface Props {
   name: string;
@@ -21,21 +22,17 @@ const { name } = Astro.props;
         </p>
       </div>
       <div class="links flex items-center justify-start mt-4 gap-4">
-        <IconLink
-          link={"https://github.com/quasariumm"}
-          icon_name="github"
-          alt="GitHub"
-        />
-        <IconLink
-          link={"https://www.linkedin.com/in/patrick-vreeburg-2b94a6325/"}
-          icon_name="linkedin"
-          alt="LinkedIn"
-        />
-        <IconLink
-          link={"https://quasariumm.itch.io/"}
-          icon_name="itchio"
-          alt="Itch"
-        />
+        {
+          SocialLinks.map((link) => (
+            <IconLink
+              link={link.url}
+              icon_name={
+                link.name == "GitHub" ? "github" : link.name == "LinkedIn" ? "linkedin" : link.name == "Steam" ? "steam" : "itchio"
+              }
+              alt={link.name}
+            />
+          ))
+        }
       </div>
     </div>
     <img

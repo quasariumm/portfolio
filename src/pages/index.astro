@@ -7,9 +7,10 @@ import { getPost } from '@/pages/blog/index.astro';
 import Layout from '@/layouts/Layout.astro';
 import ProjectCard from '@/components/ProjectCard.astro';
 import { getProject } from './projects/index.astro';
+import { home } from '@/config/page';
 ---
 
-<Layout>
+<Layout {...home}>
 	<ShortAbout name='Patrick Vreeburg' />
 	<Separator />
 	<Featured>
