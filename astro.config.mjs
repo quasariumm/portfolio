@@ -5,6 +5,8 @@ import rehypeFigureTitle from "rehype-figure-title"
 import { rehypeAccessibleEmojis } from 'rehype-accessible-emojis'
 import { remarkReadingTime } from './src/plugins/remark-reading-time.mjs'
 import { remarkModifiedTime } from './src/plugins/remark-modified-time.mjs'
+import remarkMath from 'remark-math';
+import rehypeMathJax from 'rehype-mathjax';
 import icon from 'astro-icon';
 import serviceWorker from 'astrojs-service-worker';
 import sitemap from '@astrojs/sitemap';
@@ -25,8 +27,8 @@ export default defineConfig({
     ],
 
     markdown: {
-        remarkPlugins: [remarkReadingTime, remarkModifiedTime],
-		rehypePlugins: [rehypeFigureTitle, rehypeAccessibleEmojis],
+        remarkPlugins: [remarkReadingTime, remarkModifiedTime, remarkMath],
+		rehypePlugins: [rehypeFigureTitle, rehypeAccessibleEmojis, rehypeMathJax],
 
         syntaxHighlight: 'shiki',
         shikiConfig: {
