@@ -1,14 +1,16 @@
-<h1 class="w-full text-center my-16">Featured</h1>
-<div class="w-full flex justify-center items-center">
-    <div class="featured-container max-w-6xl gap-4 w-full flex justify-evenly items-center">
-        <slot />
+<section class="featured">
+    <h1 class="w-full text-center my-16">Featured</h1>
+    <div class="app-container w-full flex justify-center items-center">
+        <div class="featured-container max-w-6xl gap-4 w-full flex justify-evenly items-center">
+            <slot />
+        </div>
     </div>
-</div>
-
-<style>
-    @media (max-width: 60rem) {
-        .featured-container {
-            flex-direction: column !important;
+    
+    <style>
+        @media (max-width: 60rem) {
+            .featured-container {
+                flex-direction: column !important;
+            }
         }
-    }
-</style>
+    </style>
+</section>

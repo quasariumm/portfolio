@@ -8,6 +8,8 @@ import Layout from '@/layouts/Layout.astro';
 import ProjectCard from '@/components/ProjectCard.astro';
 import { getProject } from './projects/index.astro';
 import { home } from '@/config/page';
+import About from '@/components/About.astro'
+import Skills from '@/components/Skills.astro'
 ---
 
 <Layout {...home}>
@@ -19,4 +21,7 @@ import { home } from '@/config/page';
 		<BlogCard post={getPost("Dummy blog post")} />
 	</Featured>
 	<Separator />
+	<About />
+	<Separator />
+	<Skills />
 </Layout>
