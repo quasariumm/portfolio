@@ -9,30 +9,7 @@ const { line_color = "--color-accent", text_color = "--color-primary" } = Astro.
 
 <div class="my-24 w-full h-2 flex justify-center items-center">
     <div 
-        class="responsive rounded-xs h-full max-w-6xl w-full" 
+        class="max-w-2xs sm:max-w-md md:max-w-2xl lg:max-w-3xl 2xl:max-w-7xl rounded-xs h-full w-full" 
         style={`background-color: var(${line_color}); @media (prefers-color-scheme: dark) { background-color: var(${line_color}-dark); }`}
     ></div>
 </div>
-
-<style>
-    @media (max-width: 80rem) {
-        .responsive {
-            max-width: var(--container-3xl) !important;
-        }
-    }
-    @media (max-width: 60rem) {
-        .responsive {
-            max-width: var(--container-2xl) !important;
-        }
-    }
-    @media (max-width: 50rem) {
-        .responsive {
-            max-width: var(--container-md) !important;
-        }
-    }
-    @media (max-width: 40rem) {
-        .responsive {
-            max-width: var(--container-2xs) !important;
-        }
-    }
-</style>
