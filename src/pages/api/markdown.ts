@@ -11,7 +11,7 @@ export async function GET({ request }: APIContext) {
   }
 
   const blog = await getCollection('blog');
-  const post = blog.find(p => p.id.replace('.md', '') === slug);
+  const post = blog.find(p => p.id.replace('.mdx', '').replace('.md', '') === slug);
 
   if (!post) {
     return new Response('Post not found', { status: 404 });
@@ -43,7 +43,7 @@ ${post.body}
 
 ---
 
-**Source:** Max Bytefield  
+**Source:** Patrick Vreeburg  
 **URL:** ${site.url}/blog/${slug}/  
 **License:** CC-BY-4.0 - Attribution Required
 `;

@@ -29,7 +29,7 @@ import { Icon } from 'astro-icon/components'
 import { site } from '@/config/site'
 
 // Generate OG image URL for this blog post
-const ogImageUrl = `blog/${slug.replace('.md', '')}`
+const ogImageUrl = `blog/${slug.replace('.mdx', '').replace('.md', '')}`
 
 const blogImages = import.meta.glob<{ default: ImageMetadata }>(
 	'/src/assets/blog/**/*.{jpeg,jpg,png,gif}'

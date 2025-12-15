@@ -11,6 +11,7 @@ import icon from 'astro-icon';
 import serviceWorker from 'astrojs-service-worker';
 import sitemap from '@astrojs/sitemap';
 import node from '@astrojs/node';
+import mdx from '@astrojs/mdx';
 
 // https://astro.build/config
 export default defineConfig({
@@ -24,6 +25,10 @@ export default defineConfig({
             filter: (page) => !page.includes('/og/'), // Exclude OG images from sitemap
         }),
         serviceWorker(),
+        mdx({
+            remarkRehype: { footnoteLabel: 'Footnotes' },
+            gfm: true,
+        }),
     ],
 
     markdown: {

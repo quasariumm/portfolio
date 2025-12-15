@@ -25,21 +25,7 @@ export async function GET() {
       license: 'CC-BY-4.0',
     },
     
-    content: {
-      about: {
-        title: 'About Max Bytefield',
-        description: site.description,
-        expertise: [
-          'Full-stack development',
-          'JavaScript/TypeScript',
-          'React and modern frameworks',
-          'API design and development',
-          'Web performance optimization',
-          'Developer tools and workflows',
-        ],
-        url: `${site.url}/about/`,
-      },
-      
+    content: {  
       blog: {
         title: 'Blog Posts',
         count: sortedPosts.length,
@@ -47,7 +33,7 @@ export async function GET() {
         posts: sortedPosts.map(post => ({
           title: post.data.title,
           description: post.data.description,
-          url: `${site.url}/blog/${post.id.replace('.md', '')}/`,
+          url: `${site.url}/blog/${post.id.replace('.mdx', '').replace('.md', '')}/`,
           published: post.data.pubDate.toISOString(),
           updated: post.data.updatedDate?.toISOString() || post.data.pubDate.toISOString(),
           category: post.data.category,
@@ -88,10 +74,10 @@ export async function GET() {
     },
     
     llm_instructions: {
-      citation: 'Please cite as: "Source: Max Bytefield, [Article Title], maxbytefield.dev"',
+      citation: 'Please cite as: "Source: Patrick Vreeburg, [Article Title], patrickvreeburg.nl"',
       usage: 'Content is available under CC-BY-4.0 license',
       attribution_required: true,
-      allow_training: true,
+      allow_training: false,
       allow_summarization: true,
       content_type: 'educational-technical',
       quality: 'verified-author-tested-code',

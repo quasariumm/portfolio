@@ -1,0 +1,27 @@
+---
+title: 'Smoke Simulation'
+description: 'An explanation on how I simulated and rendered smoke for my block B project of my second year at BUas.'
+pubDate: 'Jan 9 2026'
+category: 'Simulation'
+tags: ['rendering', 'dx12', 'compute', 'smoke', 'buas']
+draft: true
+---
+## Introduction
+After seeing the Coding Adventures series by Sebastian Lague on fluid simulation and smoke simulation I was insprired to experiment with this myself. Initially I wanted to make a particle-based fluid simulator, but later settled on making a 3D Eularian smoke simulator. I achieved this by implementing a MAC grid system with a Jacoby pressure solver. The rendering is achieved using a raymarching algorithm that works in the same voxel grid as the pressure solver.
+
+## Simulation
+
+## Rendering
+
+## Lighting
+
+## References
+[^1]: R. Bridson, "Fluid Simulation for Computer Graphics (Second Edition)", 2016
+
+[^2]: A. Schneider, "$\mathrm{Nubis}^3$: Methods (and madness) to model and render immersive real-time voxel-based clouds.", 2023, [https://d3d3g8mu99pzk9.cloudfront.net/AndrewSchneider/Nubis%20Cubed.pdf](https://d3d3g8mu99pzk9.cloudfront.net/AndrewSchneider/Nubis%20Cubed.pdf)
+
+[^3]: K. Zhou, Z. Ren, S. Lin, H. Bao, B. Guo, H-Y. Shum, "Real-Time Smoke Rendering Using Compensated Ray Marching", 2008, [http://www.kunzhou.net/2008/smoke.pdf](http://www.kunzhou.net/2008/smoke.pdf)
+
+[^4]: K. Crane, I. Llamas, S. Tariq, "Real-Time Simulation and Rendering of 3D Fluids (GPU Gems chapter 30)", 2008, [https://www.cs.cmu.edu/~kmcrane/Projects/GPUFluid/paper.pdf](https://www.cs.cmu.edu/~kmcrane/Projects/GPUFluid/paper.pdf)
+
+[^5]: R. Brucks, "Creating a Volumetric Ray Marcher", 2016, [https://shaderbits.com/blog/creating-volumetric-ray-marcher](https://shaderbits.com/blog/creating-volumetric-ray-marcher)
