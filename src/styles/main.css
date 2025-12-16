@@ -125,6 +125,14 @@ article p,
 	font-size: 1rem;
 }
 
+article li {
+	font-size: 1rem;
+}
+
+pre:has(code) {
+	font-size: 1rem;
+}
+
 /* Tighter heading hierarchy */
 h1, h2, h3, h4, h5, h6 {
 	line-height: 1.2;
@@ -146,6 +154,15 @@ h3 {
 
 a {
 	text-decoration: none !important;
+}
+
+mjx-container:not([display]) {
+	display: inline-block !important;
+}
+
+mjx-container[display] {
+	display: flex !important;
+  	justify-content: center !important;
 }
 
 /* Accessibility: Refined focus indicators */

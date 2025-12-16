@@ -33,7 +33,16 @@ export default defineConfig({
 
     markdown: {
         remarkPlugins: [remarkReadingTime, remarkModifiedTime, remarkMath],
-		rehypePlugins: [rehypeFigureTitle, rehypeAccessibleEmojis, rehypeMathJax],
+		rehypePlugins: [rehypeFigureTitle, rehypeAccessibleEmojis, [rehypeMathJax, {
+            tex: {
+                inlineMath: {'[+]': [['$', '$']]},
+                displayMath: {'[+]': [['$$', '$$']]}
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            },
+            loader: {load: ["input/tex", "output/chtml"]}
+        }]],
 
         syntaxHighlight: 'shiki',
         shikiConfig: {
