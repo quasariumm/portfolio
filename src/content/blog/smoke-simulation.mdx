@@ -25,14 +25,12 @@ At the core of the simulation lies a MAC grid storage system. A MAC grid is a ki
     <figcaption>MAC grid visualisation[^2]</figcaption>
 </figure>
 
-For the code, I will use the convention that the 
-
 ### The algorithm
 The algorithm for solving the MAC grid takes a couple of steps. All these steps are dependent on one another and I have used algorithms that can be done with compute passes.
 
 I made use of `Texture3D` objects in HLSL to store the buffers. This because I can then easily index it using a 3-component vector type and offload the trilinear sampling needed in the advection pass to the GPU's built-in sampling functions. 
 
-All fluid simulations run on the Navier Stokes equation
+All fluid simulations run on the Navier Stokes equation[^3]
 
 $$
 \frac{\partial \vec{u}}{\partial t}=-(\vec{u}\cdot \nabla)\vec{u}-\frac{1}{\rho}\nabla p + \nu\nabla^2\vec{u} + f
@@ -43,7 +41,8 @@ $$
 $$
 
 where $\vec{u}=(u,v,w)$ is the velocity, $p$ is the pressure, $\rho$ is the fluid density and $f$ are any applicable external forces.  
-Since smoke has zero viscosity, $\nu\nabla^2\vec{u}$ can be removed from the equation.
+Since smoke has zero viscosity, $\nu\nabla^2\vec{u}$ can be removed from the equation.  
+For the code, I will use the convention that the velocities stored at a position are of the lesser side. So, $u_{i-1/2,j,k}$ is stored at `u[i][j][k]`, etc.
 
 With this equation, all passes can be broken down and this can be calculated piecewise. I chose to combine the negative divergence $-(\vec{u}\cdot \nabla)\vec{u}$ and the pressure component $-\frac{1}{\rho}\nabla p$ into one pass and kept the external forces to 0.
 
@@ -104,8 +103,6 @@ In the visualisation, you'll notice that not all pressures drop to zero as you w
 
 ## Rendering
 
-## Lighting
-
 ## Performance
 With a reasonable 200x200x200 MAC grid system and 16 iterations of the pressure solver my simulation settled on an execution time of 4.49ms, which is not per se great, but this is definitely a step up from the solver before my optimisation spree which ran at 12.42ms.
 
@@ -114,10 +111,10 @@ With a reasonable 200x200x200 MAC grid system and 16 iterations of the pressure 
 
 [^2]: R. Bridson, "Fluid Simulation for Computer Graphics (Second Edition)", 2016
 
-[^3]: A. Schneider, "$\mathrm{Nubis}^3$: Methods (and madness) to model and render immersive real-time voxel-based clouds.", 2023, https://d3d3g8mu99pzk9.cloudfront.net/AndrewSchneider/Nubis%20Cubed.pdf
+[^3]: K. Crane, I. Llamas, S. Tariq, "Real-Time Simulation and Rendering of 3D Fluids (GPU Gems chapter 30)", 2008, https://www.cs.cmu.edu/~kmcrane/Projects/GPUFluid/paper.pdf
 
-[^4]: K. Zhou, Z. Ren, S. Lin, H. Bao, B. Guo, H-Y. Shum, "Real-Time Smoke Rendering Using Compensated Ray Marching", 2008, http://www.kunzhou.net/2008/smoke.pdf
+[^4]: A. Schneider, "$\mathrm{Nubis}^3$: Methods (and madness) to model and render immersive real-time voxel-based clouds.", 2023, https://d3d3g8mu99pzk9.cloudfront.net/AndrewSchneider/Nubis%20Cubed.pdf
 
-[^5]: K. Crane, I. Llamas, S. Tariq, "Real-Time Simulation and Rendering of 3D Fluids (GPU Gems chapter 30)", 2008, https://www.cs.cmu.edu/~kmcrane/Projects/GPUFluid/paper.pdf
+[^5]: R. Brucks, "Creating a Volumetric Ray Marcher", 2016, https://shaderbits.com/blog/creating-volumetric-ray-marcher
 
-[^6]: R. Brucks, "Creating a Volumetric Ray Marcher", 2016, https://shaderbits.com/blog/creating-volumetric-ray-marcher
+[^6]: K. Zhou, Z. Ren, S. Lin, H. Bao, B. Guo, H-Y. Shum, "Real-Time Smoke Rendering Using Compensated Ray Marching", 2008, http://www.kunzhou.net/2008/smoke.pdf

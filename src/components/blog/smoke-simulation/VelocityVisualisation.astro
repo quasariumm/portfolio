@@ -2,7 +2,8 @@
   <h4>Interactive element: Velocity</h4>
   <p class="inline-block align-middle">
     Works the same as the pressure, but I added a button to calculate new
-    velocities based on the pressure. Realtime runs 16 iterations of the pressure solver.
+    velocities based on the pressure. Realtime runs 16 iterations of the
+    pressure solver.
   </p>
   <div id="button-holder" class="flex flex-row justify-left gap-4">
     <button
@@ -78,9 +79,9 @@
     const pDown = row == 7 ? 0.0 : cellValues[row + 1][col];
 
     const vLeft = horizontalArrows[row][col];
-    const vRight = col == 7 ? 0.0 : horizontalArrows[row][col + 1];
+    const vRight = horizontalArrows[row][col + 1];
     const vUp = verticalArrows[row][col];
-    const vDown = row == 7 ? 0.0 : verticalArrows[row + 1][col];
+    const vDown = verticalArrows[row + 1][col];
 
     const pressure = pLeft + pRight + pUp + pDown;
     const velocity = vRight - vLeft + vDown - vUp;
@@ -90,6 +91,14 @@
   }
 
   function CalculateVelocities() {
+    console.log(cellValues);
+    console.log(horizontalArrows);
+    console.log(verticalArrows);
+
+    for (let i = 0; i < 16; i++) {
+      UpdatePressure();
+    }
+
     const k = DELTA_TIME / DENSITY;
     // Update the arrows
     svg.querySelectorAll("line[data-type]").forEach((line) => {
@@ -105,9 +114,9 @@
         const pCenter =
           lineIdx == 8 || col == 8 ? 0.0 : cellValues[lineIdx][col];
         const pUp = lineIdx == 0 ? 0.0 : cellValues[lineIdx - 1][col];
-        verticalArrows[lineIdx][col] = verticalArrows[lineIdx][col] - k * (pCenter - pUp);
+        verticalArrows[lineIdx][col] -= k * (pCenter - pUp);
 
-        const newY = y1 + verticalArrows[lineIdx][col];
+        const newY = y1 + verticalArrows[lineIdx][col] * cellSize;
 
         line.setAttribute("x2", x1);
         line.setAttribute("y2", newY);
@@ -127,13 +136,15 @@
           row == 8 || lineIdx == 8 ? 0.0 : cellValues[row][lineIdx];
         const pLeft = lineIdx == 0 ? 0.0 : cellValues[row][lineIdx - 1];
 
-        // console.log(`Before: ${horizontalArrows[row][lineIdx]}, row: ${row}, col: ${lineIdx}, pRight: ${pCenter}, pLeft: ${pLeft}`);
+        // console.log(
+        //   `Before: ${horizontalArrows[row][lineIdx]}, row: ${row}, col: ${lineIdx}, pRight: ${pRight}, pLeft: ${pLeft}`
+        // );
 
-        horizontalArrows[row][lineIdx] = horizontalArrows[row][lineIdx] - k * (pCenter - pLeft);
+        horizontalArrows[row][lineIdx] -= k * (pCenter - pLeft);
 
         // console.log(`After: ${horizontalArrows[row][lineIdx]}`);
 
-        const newX = x1 + horizontalArrows[row][lineIdx];
+        const newX = x1 + horizontalArrows[row][lineIdx] * cellSize;
 
         line.setAttribute("x2", newX);
         line.setAttribute("y2", y1);
@@ -161,9 +172,6 @@
     const toggle = document.getElementById("velocity-realtime");
 
     if (toggle.checked) {
-      for (let i = 0; i < 16; i++) {
-      UpdatePressure();
-      }
       CalculateVelocities();
     }
 
@@ -181,9 +189,9 @@
         } else {
           // Divergence
           const vLeft = horizontalArrows[row][col];
-          const vRight = col == 7 ? 0.0 : horizontalArrows[row][col + 1];
+          const vRight = horizontalArrows[row][col + 1];
           const vUp = verticalArrows[row][col];
-          const vDown = row == 7 ? 0.0 : verticalArrows[row + 1][col];
+          const vDown = verticalArrows[row + 1][col];
           const gradientX = vRight - vLeft;
           const gradientY = vDown - vUp;
           value = gradientX + gradientY;
@@ -196,30 +204,40 @@
               value < 0.0
                 ? `rgba(203, 166, 247, ${Math.min(1.0, Math.abs(value) / 10.0)})`
                 : `rgba(137, 220, 235, ${Math.min(1.0, Math.abs(value) / 10.0)})`;
+            cell.style.color =
+              Math.abs(value) > 6.5
+                ? "var(--color-crust-dark)"
+                : "var(--color-text-dark)";
           } else {
             cell.style.backgroundColor =
               value < 0.0
                 ? `rgba(242, 205, 205, ${Math.min(1.0, Math.abs(value))})`
                 : `rgba(180, 190, 254, ${Math.min(1.0, Math.abs(value))})`;
+            cell.style.color =
+              Math.abs(value) > 0.65
+                ? "var(--color-crust-dark)"
+                : "var(--color-text-dark)";
           }
-          cell.style.color =
-            Math.abs(value) > 0.65
-              ? "var(--color-crust-dark)"
-              : "var(--color-text-dark)";
         } else {
           if (displayPressure) {
             cell.style.backgroundColor =
               value < 0.0
                 ? `rgba(136, 57, 239, ${Math.min(1.0, Math.abs(value) / 10.0)})`
                 : `rgba(4, 165, 229, ${Math.min(1.0, Math.abs(value) / 10.0)})`;
+            cell.style.color =
+              Math.abs(value) > 6.5
+                ? "var(--color-crust-dark)"
+                : "var(--color-text-dark)";
           } else {
             cell.style.backgroundColor =
               value < 0.0
                 ? `rgba(221, 120, 120, ${Math.min(1.0, Math.abs(value))})`
                 : `rgba(114, 135, 253, ${Math.min(1.0, Math.abs(value))})`;
+            cell.style.color =
+              Math.abs(value) > 0.65
+                ? "var(--color-crust-dark)"
+                : "var(--color-text-dark)";
           }
-          cell.style.color =
-            Math.abs(value) > 0.65 ? "var(--color-crust)" : "var(--color-text)";
         }
       }
     }
