@@ -6,16 +6,19 @@ category: 'Simulation'
 tags: ['rendering', 'dx12', 'compute', 'smoke', 'buas']
 draft: true
 ---
+import PressureVisualisation from '@/components/blog/smoke-simulation/PressureVisualisation.astro';
+import VelocityVisualisation from '@/components/blog/smoke-simulation/VelocityVisualisation.astro';
+
 ## Introduction
 After seeing the Coding Adventures series by Sebastian Lague on fluid simulation and smoke simulation[^1] I was insprired to experiment with this myself. Initially I wanted to make a particle-based fluid simulator because that is rarely used in real-time applications, but later settled on making a 3D Eularian smoke simulator. I achieved this by implementing a MAC grid system with a Jacoby pressure solver. The rendering is achieved using a raymarching algorithm that works in the same voxel grid as the pressure solver.
 
-In this post, I will assume that you have a little but of math knowledge and that you can read mathematical symbols. I also assume that you know about the compute pipeline and know a bit about how compute shaders work. 
+In this post, I will assume that you have a little bit of math knowledge and that you can read mathematical symbols. I also assume that you know about the compute pipeline and know a bit about how compute shaders work. 
 
-All interactive elements on this page are inspired by the wonderful visualisations from Sebastian.
+All interactive elements on this page are inspired by the wonderful visualisations from Sebastian. The web dev part is made with help from Claude, since my web development skills are not great at the time of writing. I recommend to read this on desktop to fully profit from these.
 
 ## Simulation
 ### Grid
-At the core of the simulation lies a MAC grid storage system. A MAC grid is a kind of voxel grid technique where some values are in the center and other on the edges of cells. In my case, the grid has the pressures and cell types stored at the center of each cell, whereas the velocities are stored on the edges of the cells. This means that the pressure and type buffers need to be $(N\times M\times P)$ where $M,N,P\in\mathbb{N}$ and the velocity component buffers need to have one extra entry in their respective axis to ensure all sides have values. I will follow the convention that any parameter $q$ at a point in the grid can be written as $q_{i,j,k}$.
+At the core of the simulation lies a MAC grid storage system. A MAC grid is a kind of voxel grid technique where some values are in the center and other on the edges of cells. In my case, the grid has the pressures and cell types stored at the center of each cell, whereas the velocities are stored on the edges of the cells. This means that the dimensions of the pressure and type buffers need to be $(N\times M\times P)$ where $M,N,P\in\mathbb{N}$ and the velocity component buffers need to have one extra entry in their respective axis to ensure all sides have values. I will follow the convention that any parameter $q$ at a point in the grid can be written as $q_{i,j,k}$.
 
 <figure>
     <img alt="MAC Grid" src="/blog-images/smoke-simulation/mac-grid.png"/>
@@ -32,13 +35,17 @@ I made use of `Texture3D` objects in HLSL to store the buffers. This because I c
 All fluid simulations run on the Navier Stokes equation
 
 $$
-\frac{\partial \vec{u}}{\partial t}=-(\vec{u}\cdot \nabla \vec{u})-\frac{1}{\rho}\nabla p + f
+\frac{\partial \vec{u}}{\partial t}=-(\vec{u}\cdot \nabla)\vec{u}-\frac{1}{\rho}\nabla p + \nu\nabla^2\vec{u} + f
+$$
+
+$$
+\nabla\cdot\vec{u}=0
 $$
 
 where $\vec{u}=(u,v,w)$ is the velocity, $p$ is the pressure, $\rho$ is the fluid density and $f$ are any applicable external forces.  
-**Note that $u$ is the x component of $\vec{u}$. Read carefully.**
+Since smoke has zero viscosity, $\nu\nabla^2\vec{u}$ can be removed from the equation.
 
-With this equation, all passes can be broken down and this can be calculated piecewise. I chose to combine the negative divergence $-(\vec{u}\cdot \nabla \vec{u})$ and the pressure component $-\frac{1}{\rho}\nabla p$ into one pass and kept the external forces to 0.
+With this equation, all passes can be broken down and this can be calculated piecewise. I chose to combine the negative divergence $-(\vec{u}\cdot \nabla)\vec{u}$ and the pressure component $-\frac{1}{\rho}\nabla p$ into one pass and kept the external forces to 0.
 
 #### Pressure
 Rearranging the Navier Stokes equation gives the following formula[^1] for pressure at a point in the grid
@@ -53,10 +60,11 @@ $$
 
 where $n$ is the amount of neighbouring non-solid cells and $\Delta t$ is the time-step since the last simulation frame. For any cell that is solid the pressure and velocity can be set to 0.
 
-> **_TODO: Interactive_**
+<PressureVisualisation/>
 
 Applying this formula on a MAC grid is not enough, because as you might have already spotted the cells are dependent on each other. This means that there needs to be an algorithm in place to relax the values to near their equilibrium.
-A simple way to do this is the "Just running the shader a lot of times" method or more formerly known as the [*Jacobi method*](https://en.wikipedia.org/wiki/Jacobi_method).  
+A simple way to do this is the "Just running the shader a lot of times" method or more formerly known as the [*Jacobi method*](https://en.wikipedia.org/wiki/Jacobi_method). As you can probably also see from the visualisation,
+the pressure needs quite a lot of iterations to settle down. There is no way to run this an infinite amount of times, so for each pass of the solver the pressure is only updated a fixed amount of times (in my case 16).  
 To make this as performant as possible however, the best option is to utilise the GPU for this, but this poses the problem of race conditions, hence the need for the shader to use what's called *Red-Black computation*. 
 This algorithm first computes the values for the even cells and then for the odd cells. This works flawlessly, since the formula for pressure shows that no diagonal neighbours are being sampled.
 
@@ -69,18 +77,28 @@ This algorithm first computes the values for the even cells and then for the odd
 This is where the magic of the MAC grid comes to light. Since we have the pressure of all cell centers, getting the velocity simply
 
 $$
-u_{i+1/2,j,k}=\Delta t\cdot\frac{p_{i,j,k}-p_{i-1,j,k}}{\rho\Delta x}
+u_{i+1/2,j,k}=u_{i+1/2,j,k}-\Delta t\cdot\frac{p_{i,j,k}-p_{i-1,j,k}}{\rho\Delta x}
 $$
 
 $$
-v_{i,j+1/2,k}=\Delta t\cdot\frac{p_{i,j,k}-p_{i,j-1,k}}{\rho\Delta x}
+v_{i,j+1/2,k}=v_{i,j+1/2,k}-\Delta t\cdot\frac{p_{i,j,k}-p_{i,j-1,k}}{\rho\Delta x}
 $$
 
 $$
-w_{i,j,k+1/2}=\Delta t\cdot\frac{p_{i,j,k}-p_{i,j,k-1}}{\rho\Delta x}
+w_{i,j,k+1/2}=w_{i,j,k+1/2}-\Delta t\cdot\frac{p_{i,j,k}-p_{i,j,k-1}}{\rho\Delta x}
 $$
 
-> **_TODO: Interactive_**
+Applying this pass satisfies the requirement that 
+
+$$
+\nabla\cdot\vec{u}=0
+$$
+
+or in other words that there is an equal amount of velocity leaving the cell as there is velocity entering.
+
+<VelocityVisualisation/>
+
+In the visualisation, you'll notice that not all pressures drop to zero as you would expect (because velocity tries to equalise the pressure difference). This is because we cannot run the pressure solver enough times to make for an absolute equilibrium.
 
 #### Advection
 

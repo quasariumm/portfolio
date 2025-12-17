@@ -1,0 +1,605 @@
+<div class="velocity p-4 w-full border rounded-lg">
+  <h4>Interactive element: Velocity</h4>
+  <p class="inline-block align-middle">
+    Works the same as the pressure, but I added a button to calculate new
+    velocities based on the pressure. Realtime runs 16 iterations of the pressure solver.
+  </p>
+  <div id="button-holder" class="flex flex-row justify-left gap-4">
+    <button
+      type="button"
+      id="velocity-reset"
+      class="btn-reset border rounded-lg px-2 py-1 border-border dark:border-border-dark bg-red dark:bg-red-dark text-base text-crust dark:text-crust-dark"
+      >Reset to zero</button
+    >
+    <button
+      type="button"
+      id="velocity-random"
+      class="btn-randomise border rounded-lg px-2 py-1 border-border dark:border-border-dark bg-teal dark:bg-teal-dark text-base text-crust dark:text-crust-dark"
+      >Randomise</button
+    >
+    <button
+      type="button"
+      id="velocity-calculate"
+      class="btn-randomise border rounded-lg px-2 py-1 border-border dark:border-border-dark bg-sky dark:bg-sky-dark text-base text-crust dark:text-crust-dark"
+      >Calculate Velocity</button
+    >
+    <input type="checkbox" name="Run in realtime" id="velocity-realtime" />
+    <label for="velocity-realtime" class="flex items-center justify-left"
+      >Run in realtime</label
+    >
+  </div>
+  <div class="flex flex-row gap-4">
+    Display:
+    <select name="Display" id="display-select">
+      <option value="Pressure">Pressure</option>
+      <option value="Divergence">Divergence</option>
+    </select>
+  </div>
+  <div class="relative inline-block mt-4 w-full">
+    <div id="velocity-grid" class="grid grid-cols-8 grid-rows-8"></div>
+    <svg
+      id="velocity-arrow-svg"
+      class="absolute top-0 left-0 pointer-events-none"></svg>
+  </div>
+</div>
+
+<style>
+  .velocity button,
+  .velocity p,
+  .velocity div label {
+    font-size: 1rem !important;
+    margin: 0 !important;
+  }
+  .velocity div label {
+    margin-left: calc(-2 * var(--spacing)) !important;
+  }
+  .velocity h4 {
+    margin-top: 0 !important;
+  }
+</style>
+
+<script>
+  /*
+    Arrow drawing and dragging logic was made by Claude.
+    The simulation is based on the actual implementation in my project at BUas.
+  */
+
+  /*
+    Solver
+  */
+  const DENSITY = 0.6;
+  const DELTA_X = 1.0;
+  const DELTA_TIME = 0.016;
+
+  function CalculatePressure(row, col) {
+    const pLeft = col == 0 ? 0.0 : cellValues[row][col - 1];
+    const pRight = col == 7 ? 0.0 : cellValues[row][col + 1];
+    const pUp = row == 0 ? 0.0 : cellValues[row - 1][col];
+    const pDown = row == 7 ? 0.0 : cellValues[row + 1][col];
+
+    const vLeft = horizontalArrows[row][col];
+    const vRight = col == 7 ? 0.0 : horizontalArrows[row][col + 1];
+    const vUp = verticalArrows[row][col];
+    const vDown = row == 7 ? 0.0 : verticalArrows[row + 1][col];
+
+    const pressure = pLeft + pRight + pUp + pDown;
+    const velocity = vRight - vLeft + vDown - vUp;
+
+    cellValues[row][col] =
+      (pressure - (DENSITY * DELTA_X * velocity) / DELTA_TIME) / 4.0;
+  }
+
+  function CalculateVelocities() {
+    const k = DELTA_TIME / DENSITY;
+    // Update the arrows
+    svg.querySelectorAll("line[data-type]").forEach((line) => {
+      const type = line.dataset.type;
+
+      const x1 = parseFloat(line.getAttribute("x1"));
+      const y1 = parseFloat(line.getAttribute("y1"));
+
+      if (type === "vertical") {
+        const lineIdx = parseInt(line.dataset.lineIdx);
+        const col = parseInt(line.dataset.col);
+
+        const pCenter =
+          lineIdx == 8 || col == 8 ? 0.0 : cellValues[lineIdx][col];
+        const pUp = lineIdx == 0 ? 0.0 : cellValues[lineIdx - 1][col];
+        verticalArrows[lineIdx][col] = verticalArrows[lineIdx][col] - k * (pCenter - pUp);
+
+        const newY = y1 + verticalArrows[lineIdx][col];
+
+        line.setAttribute("x2", x1);
+        line.setAttribute("y2", newY);
+
+        if (
+          line.nextElementSibling &&
+          line.nextElementSibling.tagName === "line"
+        ) {
+          line.nextElementSibling.setAttribute("x2", x1);
+          line.nextElementSibling.setAttribute("y2", newY);
+        }
+      } else {
+        const row = parseInt(line.dataset.row);
+        const lineIdx = parseInt(line.dataset.lineIdx);
+
+        const pCenter =
+          row == 8 || lineIdx == 8 ? 0.0 : cellValues[row][lineIdx];
+        const pLeft = lineIdx == 0 ? 0.0 : cellValues[row][lineIdx - 1];
+
+        // console.log(`Before: ${horizontalArrows[row][lineIdx]}, row: ${row}, col: ${lineIdx}, pRight: ${pCenter}, pLeft: ${pLeft}`);
+
+        horizontalArrows[row][lineIdx] = horizontalArrows[row][lineIdx] - k * (pCenter - pLeft);
+
+        // console.log(`After: ${horizontalArrows[row][lineIdx]}`);
+
+        const newX = x1 + horizontalArrows[row][lineIdx];
+
+        line.setAttribute("x2", newX);
+        line.setAttribute("y2", y1);
+
+        if (
+          line.nextElementSibling &&
+          line.nextElementSibling.tagName === "line"
+        ) {
+          line.nextElementSibling.setAttribute("x2", newX);
+          line.nextElementSibling.setAttribute("y2", y1);
+        }
+      }
+    });
+  }
+
+  function UpdatePressure() {
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        CalculatePressure(row, col);
+      }
+    }
+  }
+
+  setInterval(() => {
+    const toggle = document.getElementById("velocity-realtime");
+
+    if (toggle.checked) {
+      for (let i = 0; i < 16; i++) {
+      UpdatePressure();
+      }
+      CalculateVelocities();
+    }
+
+    const select = document.querySelector("#display-select");
+    const displayPressure = select.options[0].selected;
+
+    const cells = document.getElementById("velocity-grid")?.children;
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const cell = cells?.item(row * gridSize + col);
+
+        let value = 0.0;
+        if (displayPressure) {
+          value = cellValues[row][col];
+        } else {
+          // Divergence
+          const vLeft = horizontalArrows[row][col];
+          const vRight = col == 7 ? 0.0 : horizontalArrows[row][col + 1];
+          const vUp = verticalArrows[row][col];
+          const vDown = row == 7 ? 0.0 : verticalArrows[row + 1][col];
+          const gradientX = vRight - vLeft;
+          const gradientY = vDown - vUp;
+          value = gradientX + gradientY;
+        }
+        cell.textContent = value.toFixed(2);
+
+        if (document.documentElement.classList.contains("dark")) {
+          if (displayPressure) {
+            cell.style.backgroundColor =
+              value < 0.0
+                ? `rgba(203, 166, 247, ${Math.min(1.0, Math.abs(value) / 10.0)})`
+                : `rgba(137, 220, 235, ${Math.min(1.0, Math.abs(value) / 10.0)})`;
+          } else {
+            cell.style.backgroundColor =
+              value < 0.0
+                ? `rgba(242, 205, 205, ${Math.min(1.0, Math.abs(value))})`
+                : `rgba(180, 190, 254, ${Math.min(1.0, Math.abs(value))})`;
+          }
+          cell.style.color =
+            Math.abs(value) > 0.65
+              ? "var(--color-crust-dark)"
+              : "var(--color-text-dark)";
+        } else {
+          if (displayPressure) {
+            cell.style.backgroundColor =
+              value < 0.0
+                ? `rgba(136, 57, 239, ${Math.min(1.0, Math.abs(value) / 10.0)})`
+                : `rgba(4, 165, 229, ${Math.min(1.0, Math.abs(value) / 10.0)})`;
+          } else {
+            cell.style.backgroundColor =
+              value < 0.0
+                ? `rgba(221, 120, 120, ${Math.min(1.0, Math.abs(value))})`
+                : `rgba(114, 135, 253, ${Math.min(1.0, Math.abs(value))})`;
+          }
+          cell.style.color =
+            Math.abs(value) > 0.65 ? "var(--color-crust)" : "var(--color-text)";
+        }
+      }
+    }
+  }, 16);
+
+  /*
+    Cell Vals
+  */
+  const gridSize = 8;
+  const grid = document.getElementById("velocity-grid");
+  const svg = document.getElementById("velocity-arrow-svg");
+
+  // Cell values: gridSize x gridSize
+  const cellValues = Array(gridSize)
+    .fill(0)
+    .map(() => Array(gridSize).fill(0));
+
+  // Vertical arrows (up/down): (gridSize+1) x gridSize
+  const verticalArrows = Array(gridSize + 1)
+    .fill(0)
+    .map(() => Array(gridSize).fill(0));
+
+  // Horizontal arrows (left/right): gridSize x (gridSize+1)
+  const horizontalArrows = Array(gridSize)
+    .fill(0)
+    .map(() => Array(gridSize + 1).fill(0));
+
+  let dragState = null;
+  let cellSize = 0;
+
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      const cell = document.createElement("div");
+      cell.className =
+        "cell aspect-square border border-border dark:border-border-dark align-middle text-center cursor-pointer select-none flex items-center justify-center text-text dark:text-text-dark";
+      cell.textContent = "0.00";
+      cell.dataset.row = row;
+      cell.dataset.col = col;
+      cell.onclick = () => {
+        CalculatePressure(row, col);
+        const value = cellValues[row][col];
+        cell.textContent = value.toFixed(2);
+        if (document.documentElement.classList.contains("dark")) {
+          cell.style.backgroundColor =
+            value < 0.0
+              ? `rgba(203, 166, 247, ${Math.min(1.0, Math.abs(value) / 10.0)})`
+              : `rgba(137, 220, 235, ${Math.min(1.0, Math.abs(value) / 10.0)})`;
+          cell.style.color =
+            Math.abs(value) > 6.5
+              ? "var(--color-crust-dark)"
+              : "var(--color-text-dark)";
+        } else {
+          cell.style.backgroundColor =
+            value < 0.0
+              ? `rgba(136, 57, 239, ${Math.min(1.0, Math.abs(value) / 10.0)})`
+              : `rgba(4, 165, 229, ${Math.min(1.0, Math.abs(value) / 10.0)})`;
+          cell.style.color =
+            Math.abs(value) > 6.5 ? "var(--color-crust)" : "var(--color-text)";
+        }
+      };
+      grid.appendChild(cell);
+    }
+  }
+
+  const gridRect = grid.getBoundingClientRect();
+  cellSize = gridRect.width / gridSize;
+
+  /*
+    Arrows SVG
+  */
+  svg.setAttribute("width", gridSize * cellSize);
+  svg.setAttribute("height", gridSize * cellSize);
+
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  const marker = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "marker"
+  );
+  marker.setAttribute("id", "arrowhead");
+  marker.setAttribute("markerWidth", "6");
+  marker.setAttribute("markerHeight", "6");
+  marker.setAttribute("refX", "5");
+  marker.setAttribute("refY", "2");
+  marker.setAttribute("orient", "auto");
+  const polygon = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "polygon"
+  );
+  polygon.setAttribute("points", "0 0, 6 2, 0 4");
+  polygon.setAttribute("fill", "#4a90e2");
+  marker.appendChild(polygon);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  // Create vertical arrows
+  for (let lineIdx = 0; lineIdx <= gridSize; lineIdx++) {
+    for (let col = 0; col < gridSize; col++) {
+      const x = col * cellSize + cellSize / 2;
+      const y = lineIdx * cellSize;
+      createVerticalArrow(lineIdx, col, x, y);
+    }
+  }
+
+  // Create horizontal arrows
+  for (let row = 0; row < gridSize; row++) {
+    for (let lineIdx = 0; lineIdx <= gridSize; lineIdx++) {
+      const x = lineIdx * cellSize;
+      const y = row * cellSize + cellSize / 2;
+      createHorizontalArrow(row, lineIdx, x, y);
+    }
+  }
+
+  function createVerticalArrow(lineIdx, col, x, y) {
+    const circle = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "circle"
+    );
+    circle.setAttribute("cx", x);
+    circle.setAttribute("cy", y);
+    circle.setAttribute("r", "3");
+    circle.setAttribute("fill", "#4a90e2");
+    svg.appendChild(circle);
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x);
+    line.setAttribute("y1", y);
+    line.setAttribute("x2", x);
+    line.setAttribute("y2", y);
+    line.setAttribute("stroke", "#4a90e2");
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("marker-end", "url(#arrowhead)");
+    line.dataset.type = "vertical";
+    line.dataset.lineIdx = lineIdx;
+    line.dataset.col = col;
+    svg.appendChild(line);
+
+    const hitArea = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "line"
+    );
+    hitArea.setAttribute("x1", x);
+    hitArea.setAttribute("y1", y);
+    hitArea.setAttribute("x2", x);
+    hitArea.setAttribute("y2", y);
+    hitArea.setAttribute("stroke", "transparent");
+    hitArea.setAttribute("stroke-width", "10");
+    hitArea.style.pointerEvents = "all";
+    hitArea.style.cursor = "grab";
+    hitArea.dataset.type = "vertical";
+    hitArea.dataset.lineIdx = lineIdx;
+    hitArea.dataset.col = col;
+    svg.appendChild(hitArea);
+
+    hitArea.addEventListener("mousedown", startDrag);
+  }
+
+  function createHorizontalArrow(row, lineIdx, x, y) {
+    const circle = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "circle"
+    );
+    circle.setAttribute("cx", x);
+    circle.setAttribute("cy", y);
+    circle.setAttribute("r", "3");
+    circle.setAttribute("fill", "#4a90e2");
+    svg.appendChild(circle);
+
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x);
+    line.setAttribute("y1", y);
+    line.setAttribute("x2", x);
+    line.setAttribute("y2", y);
+    line.setAttribute("stroke", "#4a90e2");
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("marker-end", "url(#arrowhead)");
+    line.dataset.type = "horizontal";
+    line.dataset.row = row;
+    line.dataset.lineIdx = lineIdx;
+    svg.appendChild(line);
+
+    const hitArea = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "line"
+    );
+    hitArea.setAttribute("x1", x);
+    hitArea.setAttribute("y1", y);
+    hitArea.setAttribute("x2", x);
+    hitArea.setAttribute("y2", y);
+    hitArea.setAttribute("stroke", "transparent");
+    hitArea.setAttribute("stroke-width", "30");
+    hitArea.style.pointerEvents = "all";
+    hitArea.style.cursor = "grab";
+    hitArea.dataset.type = "horizontal";
+    hitArea.dataset.row = row;
+    hitArea.dataset.lineIdx = lineIdx;
+    svg.appendChild(hitArea);
+
+    hitArea.addEventListener("mousedown", startDrag);
+  }
+
+  /*
+    Dragging
+  */
+  function startDrag(e) {
+    const type = e.target.dataset.type;
+    dragState = {
+      type: type,
+      hitArea: e.target,
+      line: e.target.previousElementSibling,
+    };
+
+    if (type === "vertical") {
+      dragState.lineIdx = parseInt(e.target.dataset.lineIdx);
+      dragState.col = parseInt(e.target.dataset.col);
+    } else {
+      dragState.row = parseInt(e.target.dataset.row);
+      dragState.lineIdx = parseInt(e.target.dataset.lineIdx);
+    }
+
+    dragState.hitArea.style.cursor = "grabbing";
+    document.addEventListener("mousemove", onDrag);
+    document.addEventListener("mouseup", endDrag);
+  }
+
+  function onDrag(e) {
+    if (!dragState) return;
+
+    const rect = svg.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const { type, line, hitArea } = dragState;
+
+    if (type === "vertical") {
+      const { lineIdx, col } = dragState;
+      const startX = col * cellSize + cellSize / 2;
+      const startY = lineIdx * cellSize;
+
+      const dy = y - startY;
+      const newY = startY + dy;
+
+      line.setAttribute("x2", startX);
+      line.setAttribute("y2", newY);
+      hitArea.setAttribute("x2", startX);
+      hitArea.setAttribute("y2", newY);
+
+      verticalArrows[lineIdx][col] = dy / cellSize;
+    } else {
+      const { row, lineIdx } = dragState;
+      const startX = lineIdx * cellSize;
+      const startY = row * cellSize + cellSize / 2;
+
+      const dx = x - startX;
+      const newX = startX + dx;
+
+      line.setAttribute("x2", newX);
+      line.setAttribute("y2", startY);
+      hitArea.setAttribute("x2", newX);
+      hitArea.setAttribute("y2", startY);
+
+      horizontalArrows[row][lineIdx] = dx / cellSize;
+    }
+  }
+
+  function endDrag() {
+    if (dragState) {
+      dragState.hitArea.style.cursor = "grab";
+    }
+    dragState = null;
+    document.removeEventListener("mousemove", onDrag);
+    document.removeEventListener("mouseup", endDrag);
+  }
+
+  /*
+    Button functions
+  */
+
+  document
+    .getElementById("velocity-reset")
+    ?.addEventListener("click", ResetPressure);
+  document
+    .getElementById("velocity-random")
+    ?.addEventListener("click", RandomiseVelocities);
+  document
+    .getElementById("velocity-calculate")
+    ?.addEventListener("click", CalculateVelocities);
+
+  function ResetPressure() {
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        cellValues[row][col] = 0;
+      }
+    }
+
+    for (let i = 0; i <= gridSize; i++) {
+      for (let j = 0; j <= gridSize; j++) {
+        if (i <= gridSize && j < gridSize) verticalArrows[i][j] = 0;
+        if (i < gridSize && j <= gridSize) horizontalArrows[i][j] = 0;
+      }
+    }
+
+    document.querySelectorAll(".cell").forEach((cell) => {
+      cell.textContent = "0.00";
+      cell.style.backgroundColor = "rgba(0,0,0,0)";
+      if (document.documentElement.classList.contains("dark")) {
+        cell.style.color = "var(--color-text-dark)";
+      } else {
+        cell.style.color = "var(--color-text)";
+      }
+    });
+
+    svg.querySelectorAll("line[data-type]").forEach((line) => {
+      const x1 = parseFloat(line.getAttribute("x1"));
+      const y1 = parseFloat(line.getAttribute("y1"));
+      const type = line.dataset.type;
+      line.setAttribute("x2", x1);
+      line.setAttribute("y2", y1);
+
+      if (
+        line.nextElementSibling &&
+        line.nextElementSibling.tagName === "line"
+      ) {
+        const hitArea = line.nextElementSibling;
+        if (type === "vertical") {
+          hitArea.setAttribute("x2", x1);
+          hitArea.setAttribute("y2", y1 + 15); // 15px minimum
+        } else {
+          hitArea.setAttribute("x2", x1 + 15); // 15px minimum
+          hitArea.setAttribute("y2", y1);
+        }
+      }
+    });
+  }
+
+  function RandomiseVelocities() {
+    ResetPressure();
+    svg.querySelectorAll("line[data-type]").forEach((line) => {
+      const type = line.dataset.type;
+      const maxLength = cellSize;
+      const magnitude = (Math.random() - 0.5) * 0.8;
+
+      const x1 = parseFloat(line.getAttribute("x1"));
+      const y1 = parseFloat(line.getAttribute("y1"));
+
+      if (type === "vertical") {
+        const lineIdx = parseInt(line.dataset.lineIdx);
+        const col = parseInt(line.dataset.col);
+        const newY = y1 + magnitude * maxLength;
+
+        line.setAttribute("x2", x1);
+        line.setAttribute("y2", newY);
+
+        if (
+          line.nextElementSibling &&
+          line.nextElementSibling.tagName === "line"
+        ) {
+          line.nextElementSibling.setAttribute("x2", x1);
+          line.nextElementSibling.setAttribute("y2", newY);
+        }
+
+        verticalArrows[lineIdx][col] = magnitude;
+      } else {
+        const row = parseInt(line.dataset.row);
+        const lineIdx = parseInt(line.dataset.lineIdx);
+        const newX = x1 + magnitude * maxLength;
+
+        line.setAttribute("x2", newX);
+        line.setAttribute("y2", y1);
+
+        if (
+          line.nextElementSibling &&
+          line.nextElementSibling.tagName === "line"
+        ) {
+          line.nextElementSibling.setAttribute("x2", newX);
+          line.nextElementSibling.setAttribute("y2", y1);
+        }
+
+        horizontalArrows[row][lineIdx] = magnitude;
+      }
+    });
+  }
+  RandomiseVelocities();
+</script>
