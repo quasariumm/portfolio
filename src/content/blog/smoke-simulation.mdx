@@ -4,7 +4,7 @@ description: 'An explanation on how I simulated and rendered smoke for my block 
 pubDate: 'Jan 9 2026'
 category: 'Simulation'
 tags: ['rendering', 'dx12', 'compute', 'smoke', 'buas']
-draft: false
+draft: true
 ---
 ## Introduction
 After seeing the Coding Adventures series by Sebastian Lague on fluid simulation and smoke simulation[^1] I was insprired to experiment with this myself. Initially I wanted to make a particle-based fluid simulator because that is rarely used in real-time applications, but later settled on making a 3D Eularian smoke simulator. I achieved this by implementing a MAC grid system with a Jacoby pressure solver. The rendering is achieved using a raymarching algorithm that works in the same voxel grid as the pressure solver.
@@ -51,7 +51,7 @@ $$
 -\rho\Delta x\frac{u_{i+1/2,j,k} - u_{i-1/2,j,k} + v_{i,j+1/2,k} - v_{i,j-1/2,k} + w_{i,j,k+1/2} - w_{i,j,k-1/2}}{n\Delta t}
 $$
 
-where $n$ is the amount of neighbouring fluid cells and $\Delta t$ is the time-step since the last simulation frame. For any cell that is not fluid the pressure and velocity can be set to 0.
+where $n$ is the amount of neighbouring non-solid cells and $\Delta t$ is the time-step since the last simulation frame. For any cell that is solid the pressure and velocity can be set to 0.
 
 > **_TODO: Interactive_**
 
