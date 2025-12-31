@@ -8,9 +8,10 @@ draft: true
 ---
 import PressureVisualisation from '@/components/blog/smoke-simulation/PressureVisualisation.astro';
 import VelocityVisualisation from '@/components/blog/smoke-simulation/VelocityVisualisation.astro';
+import AdvectionVisualisation from '@/components/blog/smoke-simulation/AdvectionVisualisation.astro';
 
 ## Introduction
-After seeing the Coding Adventures series by Sebastian Lague on fluid simulation and smoke simulation[^1] I was insprired to experiment with this myself. Initially I wanted to make a particle-based fluid simulator because that is rarely used in real-time applications, but later settled on making a 3D Eularian smoke simulator. I achieved this by implementing a MAC grid system with a Jacoby pressure solver. The rendering is achieved using a raymarching algorithm that works in the same voxel grid as the pressure solver.
+After seeing the Coding Adventures series by Sebastian Lague on fluid simulation and smoke simulation [^1] I was insprired to experiment with this myself. Initially I wanted to make a particle-based fluid simulator because that is rarely used in real-time applications, but later settled on making a 3D Eularian smoke simulator. I achieved this by implementing a MAC grid system with a Jacoby pressure solver. The rendering is achieved using a raymarching algorithm that works in the same voxel grid as the pressure solver.
 
 In this post, I will assume that you have a little bit of math knowledge and that you can read mathematical symbols. I also assume that you know about the compute pipeline and know a bit about how compute shaders work. 
 
@@ -30,7 +31,7 @@ The algorithm for solving the MAC grid takes a couple of steps. All these steps 
 
 I made use of `Texture3D` objects in HLSL to store the buffers. This because I can then easily index it using a 3-component vector type and offload the trilinear sampling needed in the advection pass to the GPU's built-in sampling functions. 
 
-All fluid simulations run on the Navier Stokes equation[^3]
+All fluid simulations run on the Navier Stokes equation [^3]
 
 $$
 \frac{\partial \vec{u}}{\partial t}=-(\vec{u}\cdot \nabla)\vec{u}-\frac{1}{\rho}\nabla p + \nu\nabla^2\vec{u} + f
@@ -99,12 +100,102 @@ or in other words that there is an equal amount of velocity leaving the cell as 
 
 In the visualisation, you'll notice that not all pressures drop to zero as you would expect (because velocity tries to equalise the pressure difference). This is because we cannot run the pressure solver enough times to make for an absolute equilibrium.
 
+What yoy can also notice from the simulation is that there forms a natural vortex pattern in the velocities. This effect will cause the smoke to spread out and create those curls that are usually associated with smoke.
+
 #### Advection
+To make the velocities move through the volume the logical approach is to take the current velocity at one of the faces and move that velocity one time step forward.
+
+$$
+q^{n+1}_{p+\Delta t\vec{u}^n_p}=q^n_p
+$$
+
+where $q$ is any arbitrary value that needs to be advected and $p$ is its position.
+
+This brings one major problem, namely that it is possible but very computationally difficult to distribute the velocity. But since this a sequence we can instead can just move one step backwards and put that velocity at the position on the chosen face
+
+$$
+q^{n+1}_p=q^n_{p-\Delta t\vec{u}^n_p}
+$$
+
+This is computationally very simple, since that only takes two samples of the velocity. With this method, the second sample only needs to be the component of the face that is being computed.
+
+<AdvectionVisualisation/>
+
+#### Temperature and concentration
+Specifically for smoke temperature $T$ and concentration $s$ are needed to make it act properly. Both of the variables are stored at the center of a cell and are advected as for the velocity. Spawners inject concentration into the grid, whereafter the buoyancy force [^2] is applied to the velocities to produce the initial velocity.
+
+$$
+\vec{b}=[\alpha s-\beta(T-T_{amb})]\vec{g}
+$$
+
+where $\alpha$ and $\beta$ ar non-zero constants that you can set to your liking, $T_{amb}=273\mathrm{K}$ and $\vec{g}=9.81$
+
+This means that both variables are dependent on one another.
 
 ## Rendering
+Rendering the smoke is done through a simple raymarching algorithm. In my implementation, the origin of the rays are snapped to the bounds of the fluid to not have to trace through a guaranteed empty space.
+
+<figure>
+    <img alt="Raymarching" src="http://storage.googleapis.com/wzukusers/user-22455410/images/582d0051864a7RoVu4za/Tracing2.gif"/>
+    <figcaption>Raymarching [^5]</figcaption>
+</figure>
+
+Each step of the raymarcher, the checked point is shifter over some step size. Then I sample the concentration buffer to know how much if any smoke is at that point. All the concentration values are summed up and the sum is used to determine the final opacity and color of the pixel using the formula [^6]:
+
+$$
+E=2\cdot e^{-dp}\cdot (1-e^{-2d})\cdot\frac{1}{4\pi}\frac{1-g^2}{1+g^2-2g\cos(\theta)^{3/2}}
+$$
+
+where $d$ is the total distance, $p$ is the absorbance coefficient, $\theta$ is the angle between the ray direction and the sunlight direction and $g$ is the eccentricity that defaults to 0.2.
+
+To make the smoke look more 'smoke-like' I apply the noise functions proposed in the $\mathrm{Nubis}^3$ talk [^4]. For this, I take their [3D noise texture](https://bit.ly/NubisVoxelCloudPack) and sample it with the following algorithm 
+
+```hlsl
+// Code from VoxelCloudSampler.cg
+// https://bit.ly/NubisVoxelCloudPack
+float4 noise = Noise.Sample(NoiseSampler, samplePos * 0.1);
+float wispyNoise = lerp(noise.r, noise.g, dimensionalProfile);
+float billowyTypeGradient = pow(dimensionalProfile, 0.25);
+float billowyNoise = lerp(noise.b * 0.3, noise.a * 0.3, billowyTypeGradient);
+
+float noiseComposite = lerp(wispyNoise, billowyNoise, sample);
+
+float uprezzedDensity = ValueErosion(sample, noiseComposite);
+float poweredDensity = Tesseract(sample);
+
+uprezzedDensity *= poweredDensity;
+uprezzedDensity = pow(uprezzedDensity, lerp(0.3, 0.6, max(0.0001, poweredDensity)));
+
+...
+
+SummedDensity[tId] += uprezzedDensity;
+```
 
 ## Performance
-With a reasonable 200x200x200 MAC grid system and 16 iterations of the pressure solver my simulation settled on an execution time of 4.49ms, which is not per se great, but this is definitely a step up from the solver before my optimisation spree which ran at 12.42ms.
+With a reasonable 200x200x200 MAC grid system and 16 iterations of the pressure solver my simulation settled on an execution time of **TODO**ms.
+
+During the project, I have made several significant optimisations to my fluid solver and rendering algorithm. These include:
+- More efficient use of GPU data types. These choices include using `half` over `float` or using `Texture3D` over a `StructuredBuffer` or `ByteAddressBuffer`.
+- Making use of shared memory caching. This gains very much in the fluid solver because of the large amount of times a certain pixel is sampled. For example, a pixel of the pressure texture is sampled four times per iteration of the pressure solver. Since I run it with 16 iterations, this racks up quite quickly.
+- Using the GPU as much as possible. Optimisations included moving the pressure iteration loop to the GPU to make it benefit the shared memory optimisation and removing the need of having a temporary buffer by saving in shared memory on the GPU and writing to the texture after a memory sync.
+
+Below is a table with the results of the optimisations listed above. Note that the measurements are done on a version some ways into the development and does not resemble the final performance. Do however take these as a reference on how certain changes might impact performance.
+| **Addition/Change** | **Time** | **Rel. to baseline** | **Rel. to last** |
+| :--- | :---: | :---: | :---: |
+| Baseline | 12.42ms | N/A | N/A |
+| 3D thread index | 16.43ms | <span style="color: #e78284ff">+32.3%</span> | <span style="color: #e78284ff">+32.3%</span> |
+| Buffer ⟶ Texture | 11.13ms | <span style="color: #a6d189ff">-10.4%</span> | <span style="color: #a6d189ff">-32.3%</span> |
+| Pressure iterations on the GPU | 8.96ms | <span style="color: #a6d189ff">-27.9%</span> | <span style="color: #a6d189ff">-19.5%</span> |
+| Red-Black pressure solver | 7.86ms | <span style="color: #a6d189ff">-36.7%</span> | <span style="color: #a6d189ff">-12.3%</span> |
+| Shared memory caching | 4.49ms | <span style="color: #a6d189ff">-63.8%</span> | <span style="color: #a6d189ff">-42.9%</span> |
+| Remove tmp velocity buffers | 3.85ms | <span style="color: #a6d189ff">-69.0%</span> | <span style="color: #a6d189ff">-35.9%</span> |
+
+## Conclusion and Future Work
+All in all this project taught me plenty of things about how to do things properly on the GPU. I did not manage to do everything that I wanted, since in the eight weeks I had for the project I spent a vast majority of the time with a broken advection algorithm. Even though this lost me a lot of time, the result still gives this blog post that I hope serves well as a reference for making your own smoke/fluid simulation. During the project I also looked way differently at smoke since now I know what forces make up the movements of smoke.
+
+In the future, I am planning to maybe add light tracing in the mix as well as adding emittance based on temperature. This can then be expanded with ember particles to make for a nice pyrotechnics simulator.
+
+I also do believe that a lot more performance can be squished out of the simulation with the right knowledge and tools. Sadly I did not have time to dive into the nitty-gritty details of my code
 
 ## References
 [^1]: S. Lague, "Coding Adventure: Simulating Smoke", 2025, https://www.youtube.com/watch?v=Q78wvrQ9xsU
@@ -117,4 +208,4 @@ With a reasonable 200x200x200 MAC grid system and 16 iterations of the pressure 
 
 [^5]: R. Brucks, "Creating a Volumetric Ray Marcher", 2016, https://shaderbits.com/blog/creating-volumetric-ray-marcher
 
-[^6]: K. Zhou, Z. Ren, S. Lin, H. Bao, B. Guo, H-Y. Shum, "Real-Time Smoke Rendering Using Compensated Ray Marching", 2008, http://www.kunzhou.net/2008/smoke.pdf
+[^6]: E. Ge, D. Liang, Z. Zhang, "Fire Simulation and Rendering", 2020, https://cs184-firesim.github.io/final-report/

@@ -1,5 +1,5 @@
-<div class="velocity p-4 w-full border rounded-lg">
-  <h4>Interactive element: Velocity</h4>
+<div class="advect p-4 w-full border rounded-lg">
+  <h4>Interactive element: Advection</h4>
   <p class="inline-block align-middle">
     Works the same as the pressure, but I added a button to calculate new
     velocities based on the pressure. Realtime runs 16 iterations of the
@@ -8,53 +8,50 @@
   <div id="button-holder" class="flex flex-row justify-left gap-4">
     <button
       type="button"
-      id="velocity-reset"
+      id="advect-reset"
       class="btn-reset border rounded-lg px-2 py-1 border-border dark:border-border-dark bg-red dark:bg-red-dark text-base text-crust dark:text-crust-dark"
       >Reset to zero</button
     >
     <button
       type="button"
-      id="velocity-random"
+      id="advect-random"
       class="btn-randomise border rounded-lg px-2 py-1 border-border dark:border-border-dark bg-teal dark:bg-teal-dark text-base text-crust dark:text-crust-dark"
       >Randomise</button
     >
-    <button
-      type="button"
-      id="velocity-calculate"
-      class="btn-randomise border rounded-lg px-2 py-1 border-border dark:border-border-dark bg-sky dark:bg-sky-dark text-base text-crust dark:text-crust-dark"
-      >Calculate Velocity</button
-    >
-    <input type="checkbox" name="Run in realtime" id="velocity-realtime" />
-    <label for="velocity-realtime" class="flex items-center justify-left"
+    <input type="checkbox" name="Run in realtime" id="advect-realtime" />
+    <label for="advect-realtime" class="flex items-center justify-left"
       >Run in realtime</label
+    >
+    <input type="checkbox" name="Advect velocities" id="advect-advect" />
+    <label for="advect-advect" class="flex items-center justify-left"
+      >Advect</label
     >
   </div>
   <div class="flex flex-row gap-4">
     Display:
-    <select name="Display" id="display-select">
+    <select name="Display" id="advect-display-select">
       <option value="Pressure">Pressure</option>
       <option value="Divergence">Divergence</option>
     </select>
   </div>
   <div class="relative inline-block mt-4 w-full">
-    <div id="velocity-grid" class="grid grid-cols-8 grid-rows-8"></div>
-    <svg
-      id="velocity-arrow-svg"
-      class="absolute top-0 left-0 pointer-events-none"></svg>
+    <div id="advect-grid" class="grid grid-cols-8 grid-rows-8"></div>
+    <svg id="advect-arrow-svg" class="absolute top-0 left-0 pointer-events-none"
+    ></svg>
   </div>
 </div>
 
 <style>
-  .velocity button,
-  .velocity p,
-  .velocity div label {
+  .advect button,
+  .advect p,
+  .advect div label {
     font-size: 1rem !important;
     margin: 0 !important;
   }
-  .velocity div label {
+  .advect div label {
     margin-left: calc(-2 * var(--spacing)) !important;
   }
-  .velocity h4 {
+  .advect h4 {
     margin-top: 0 !important;
   }
 </style>
@@ -90,6 +87,14 @@
       (pressure - (DENSITY * DELTA_X * velocity) / DELTA_TIME) / 4.0;
   }
 
+  function UpdatePressure() {
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        CalculatePressure(row, col);
+      }
+    }
+  }
+
   function CalculateVelocities() {
     // console.log(cellValues);
     // console.log(horizontalArrows);
@@ -98,13 +103,12 @@
     for (let i = 0; i < 16; i++) {
       UpdatePressure();
     }
-    
+
     const k = DELTA_TIME / DENSITY;
 
     for (let row = 0; row <= gridSize; row++) {
       for (let col = 0; col < gridSize; col++) {
-        const pCenter =
-          row == 8 || col == 8 ? 0.0 : cellValues[row][col];
+        const pCenter = row == 8 || col == 8 ? 0.0 : cellValues[row][col];
         const pUp = row == 0 ? 0.0 : cellValues[row - 1][col];
         verticalArrows[row][col] -= k * (pCenter - pUp);
       }
@@ -112,8 +116,7 @@
 
     for (let row = 0; row < gridSize; row++) {
       for (let col = 0; col <= gridSize; col++) {
-        const pCenter =
-          row == 8 || col == 8 ? 0.0 : cellValues[row][col];
+        const pCenter = row == 8 || col == 8 ? 0.0 : cellValues[row][col];
         const pLeft = col == 0 ? 0.0 : cellValues[row][col - 1];
         horizontalArrows[row][col] -= k * (pCenter - pLeft);
       }
@@ -162,25 +165,100 @@
     });
   }
 
-  function UpdatePressure() {
-    for (let row = 0; row < gridSize; row++) {
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function GetVelocityXAtWorldPos(worldPos: [number, number]) {
+    let size = gridSize * cellSize;
+
+    let px = (worldPos[0] + size / 2.0) / cellSize;
+    let py = (worldPos[1] + size / 2.0) / cellSize;
+
+    let left = Math.min(Math.max(0.0, Math.trunc(px)), gridSize - 1);
+    let right = left + 1;
+    let bottom = Math.min(Math.max(0.0, Math.trunc(py)), gridSize - 1);
+    let top = bottom + 1;
+
+    let xFrac = (px - left) % 1.0;
+    let yFrac = (py - bottom) % 1.0;
+
+    let valueTop = lerp(horizontalArrows[top][left], horizontalArrows[top][right], xFrac);
+    let valueBottom = lerp(horizontalArrows[bottom][left], horizontalArrows[bottom][right], xFrac);
+    return lerp(valueBottom, valueTop, yFrac);
+  }
+
+  function GetVelocityYAtWorldPos(worldPos: [number, number]) {
+    let size = gridSize * cellSize;
+
+    let px = (worldPos[0] + size / 2.0) / cellSize;
+    let py = (worldPos[1] + size / 2.0) / cellSize;
+
+    let left = Math.min(Math.max(0.0, Math.trunc(px)), gridSize - 1);
+    let right = left + 1;
+    let bottom = Math.min(Math.max(0.0, Math.trunc(py)), gridSize - 1);
+    let top = bottom + 1;
+
+    let xFrac = (px - left) % 1.0;
+    let yFrac = (py - bottom) % 1.0;
+
+    let valueTop = lerp(verticalArrows[top][left], verticalArrows[top][right], xFrac);
+    let valueBottom = lerp(verticalArrows[bottom][left], verticalArrows[bottom][right], xFrac);
+    return lerp(valueBottom, valueTop, yFrac);
+  }
+
+  function AdvectVelocities() {
+    for (let row = 0; row <= gridSize; row++) {
       for (let col = 0; col < gridSize; col++) {
-        CalculatePressure(row, col);
+        let pos: [number, number] = [row, col + 0.5];
+        let velX = GetVelocityXAtWorldPos(pos);
+        let velY = GetVelocityYAtWorldPos(pos);
+        pos[0] -= DELTA_TIME * velX;
+        pos[1] -= DELTA_TIME * velY;
+        verticalArrowsTemp[row][col] = GetVelocityYAtWorldPos(pos);
+      }
+    }
+
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col <= gridSize; col++) {
+        let pos: [number, number] = [row + 0.5, col];
+        let velX = GetVelocityXAtWorldPos(pos);
+        let velY = GetVelocityYAtWorldPos(pos);
+        pos[0] -= DELTA_TIME * velX;
+        pos[1] -= DELTA_TIME * velY;
+        horizontalArrowsTemp[row][col] = GetVelocityXAtWorldPos(pos);
+      }
+    }
+
+    for (let row = 0; row <= gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        verticalArrows[row][col] = verticalArrowsTemp[row][col];
+      }
+    }
+
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col <= gridSize; col++) {
+        horizontalArrows[row][col] = horizontalArrowsTemp[row][col];
       }
     }
   }
 
   setInterval(() => {
-    const toggle = document.getElementById("velocity-realtime");
+    const toggle = document.getElementById("advect-realtime");
 
     if (toggle.checked) {
       CalculateVelocities();
     }
 
-    const select = document.querySelector("#display-select");
+    const advect = document.getElementById("advect-advect");
+    if (advect.checked) {
+      AdvectVelocities();
+    }
+
+    const select = document.querySelector("#advect-display-select");
     const displayPressure = select.options[0].selected;
 
-    const cells = document.getElementById("velocity-grid")?.children;
+    const cells = document.getElementById("advect-grid")?.children;
     for (let row = 0; row < gridSize; row++) {
       for (let col = 0; col < gridSize; col++) {
         const cell = cells?.item(row * gridSize + col);
@@ -252,9 +330,9 @@
   /*
     Cell Vals
   */
-  const gridSize = 8;
-  const grid = document.getElementById("velocity-grid");
-  const svg = document.getElementById("velocity-arrow-svg");
+  const gridSize: number = 8;
+  const grid = document.getElementById("advect-grid");
+  const svg = document.getElementById("advect-arrow-svg");
 
   // Cell values: gridSize x gridSize
   const cellValues = Array(gridSize)
@@ -270,9 +348,19 @@
   const horizontalArrows = Array(gridSize)
     .fill(0)
     .map(() => Array(gridSize + 1).fill(0));
+    
+  // Vertical arrows (up/down): (gridSize+1) x gridSize
+  const verticalArrowsTemp = Array(gridSize + 1)
+    .fill(0)
+    .map(() => Array(gridSize).fill(0));
+
+  // Horizontal arrows (left/right): gridSize x (gridSize+1)
+  const horizontalArrowsTemp = Array(gridSize)
+    .fill(0)
+    .map(() => Array(gridSize + 1).fill(0));
 
   let dragState = null;
-  let cellSize = 0;
+  let cellSize: number = 0;
 
   for (let row = 0; row < gridSize; row++) {
     for (let col = 0; col < gridSize; col++) {
@@ -522,14 +610,11 @@
   */
 
   document
-    .getElementById("velocity-reset")
+    .getElementById("advect-reset")
     ?.addEventListener("click", ResetPressure);
   document
-    .getElementById("velocity-random")
+    .getElementById("advect-random")
     ?.addEventListener("click", RandomiseVelocities);
-  document
-    .getElementById("velocity-calculate")
-    ?.addEventListener("click", CalculateVelocities);
 
   function ResetPressure() {
     for (let row = 0; row < gridSize; row++) {
