@@ -85,6 +85,10 @@ const categorySlug = category?.toLowerCase().replace(/\s+/g, '-') || 'uncategori
 							{title}
 						</h1>
 
+						{description && (
+							<p>{description}</p>
+						)}
+
 						<!-- Category and Tags -->
 						{(category || (tags && tags.length > 0)) && (
 							<div class="flex items-center gap-3 flex-wrap">
