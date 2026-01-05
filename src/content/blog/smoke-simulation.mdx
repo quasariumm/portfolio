@@ -11,15 +11,15 @@ import VelocityVisualisation from '@/components/blog/smoke-simulation/VelocityVi
 import AdvectionVisualisation from '@/components/blog/smoke-simulation/AdvectionVisualisation.astro';
 
 ## Introduction
-After seeing the Coding Adventures series by Sebastian Lague on fluid simulation and smoke simulation [^1] I was insprired to experiment with this myself. Initially I wanted to make a particle-based fluid simulator because that is rarely used in real-time applications, but later settled on making a 3D Eularian smoke simulator. I achieved this by implementing a MAC grid system with a Jacoby pressure solver. The rendering is achieved using a raymarching algorithm that works in the same voxel grid as the pressure solver.
+After seeing the Coding Adventures series by Sebastian Lague on fluid simulation and smoke simulation [^1] I was inspired to experiment with this myself. Initially I wanted to make a particle-based fluid simulator, but because that is rarely used in real-time applications I later settled on making a 3D Eularian smoke simulator. I achieved this by implementing a MAC grid system with a Jacoby pressure solver. The rendering is achieved using a raymarching algorithm that works in the same voxel grid as the pressure solver.
 
-In this post, I will assume that you have a little bit of math knowledge and that you can read mathematical symbols. I also assume that you know about the compute pipeline and know a bit about how compute shaders work. 
+This post is aimed towards people with at minimum a basic game development aspiration and some basic math knowledge or at least the ability to read mathematical equations. 
 
 All interactive elements on this page are inspired by the wonderful visualisations from Sebastian. The web dev part is made with help from Claude, since my web development skills are not great at the time of writing. I recommend to read this on desktop to fully profit from these.
 
 ## Simulation
 ### Grid
-At the core of the simulation lies a MAC grid storage system. A MAC grid is a kind of voxel grid technique where some values are in the center and other on the edges of cells. In my case, the grid has the pressures and cell types stored at the center of each cell, whereas the velocities are stored on the edges of the cells. This means that the dimensions of the pressure and type buffers need to be $(N\times M\times P)$ where $M,N,P\in\mathbb{N}$ and the velocity component buffers need to have one extra entry in their respective axis to ensure all sides have values. I will follow the convention that any parameter $q$ at a point in the grid can be written as $q_{i,j,k}$.
+At the core of the simulation lies a MAC grid storage system. A MAC grid is a kind of voxel grid storage technique where different values are stored at different positions in the grid. In my case, the grid has the pressures, cell types, temperature and concentration stored at the center of each cell, whereas the velocities are stored on the edges of the cells. This means that the dimensions of the pressure and type buffers need to be $(N\times M\times P)$ where $M,N,P\in\mathbb{N}$ and the velocity component buffers need to have one extra entry in their respective axis to ensure all sides have values. I will follow the convention that any parameter $q$ at the center of cell $(i,j,k)$ in the grid can be written as $q_{i,j,k}$.
 
 <figure>
     <img alt="MAC Grid" src="/blog-images/smoke-simulation/mac-grid.png"/>
@@ -45,27 +45,29 @@ where $\vec{u}=(u,v,w)$ is the velocity, $p$ is the pressure, $\rho$ is the flui
 Since smoke has zero viscosity, $\nu\nabla^2\vec{u}$ can be removed from the equation.  
 For the code, I will use the convention that the velocities stored at a position are of the lesser side. So, $u_{i-1/2,j,k}$ is stored at `u[i][j][k]`, etc.
 
-With this equation, all passes can be broken down and this can be calculated piecewise. I chose to combine the negative divergence $-(\vec{u}\cdot \nabla)\vec{u}$ and the pressure component $-\frac{1}{\rho}\nabla p$ into one pass and kept the external forces to 0.
+With this equation, all passes can be broken down and this can be calculated piecewise. I chose to combine the negative divergence $-(\vec{u}\cdot \nabla)\vec{u}$ and the pressure component $-\frac{1}{\rho}\nabla p$ into one pass.
 
 #### Pressure
 Rearranging the Navier Stokes equation gives the following formula[^1] for pressure at a point in the grid
 
 $$
-p_{i,j,k}=\frac{p_{i+1,j,k} + p_{i-1,j,k} + p_{i,j+1,k} + p_{i,j-1,k} + p_{i,j,k+1} + p_{i,j,k-1}}{n}
+p_{i,j,k}=\frac{p_{i+1,j,k} + p_{i-1,j,k} + p_{i,j+1,k} + p_{i,j-1,k} + p_{i,j,k+1} + p_{i,j,k-1}}{6}
 $$
 
 $$
--\rho\Delta x\frac{u_{i+1/2,j,k} - u_{i-1/2,j,k} + v_{i,j+1/2,k} - v_{i,j-1/2,k} + w_{i,j,k+1/2} - w_{i,j,k-1/2}}{n\Delta t}
+-\rho\Delta x\frac{u_{i+1/2,j,k} - u_{i-1/2,j,k} + v_{i,j+1/2,k} - v_{i,j-1/2,k} + w_{i,j,k+1/2} - w_{i,j,k-1/2}}{6\Delta t}
 $$
 
-where $n$ is the amount of neighbouring non-solid cells and $\Delta t$ is the time-step since the last simulation frame. For any cell that is solid the pressure and velocity can be set to 0.
+where $\Delta t$ is the time-step since the last simulation frame. For any cell that is solid the pressure and velocity can be set to 0.
+
+This equation is not enough on its own, since there need to be proper bounding conditions to ensure the pressure is calculated correctly. For this, I am using the _slip_ condition which says that for all the solid boundaries, the pressure difference is zero, ensuring that the smoke can easily slip along the boundary. This also means that the edge velocities will always be zero.
 
 <PressureVisualisation/>
 
 Applying this formula on a MAC grid is not enough, because as you might have already spotted the cells are dependent on each other. This means that there needs to be an algorithm in place to relax the values to near their equilibrium.
 A simple way to do this is the "Just running the shader a lot of times" method or more formerly known as the [*Jacobi method*](https://en.wikipedia.org/wiki/Jacobi_method). As you can probably also see from the visualisation,
-the pressure needs quite a lot of iterations to settle down. There is no way to run this an infinite amount of times, so for each pass of the solver the pressure is only updated a fixed amount of times (in my case 16).  
-To make this as performant as possible however, the best option is to utilise the GPU for this, but this poses the problem of race conditions, hence the need for the shader to use what's called *Red-Black computation*. 
+the pressure needs quite a lot of iterations to settle down. To get the most precise result you'd have to run the solver a large number of times, so to keep the system <abbr title="The program taking up at most 16.6ms (60fps)">real-time</abbr> for each pass of the solver the pressure is only updated a fixed amount of times (in my case 16).  
+To make this as performant as possible however, the best option is to utilise the GPU for this, but this poses the problem of [race conditions](https://en.wikipedia.org/wiki/Race_condition), hence the need for the shader to use what's called *Red-Black computation*. 
 This algorithm first computes the values for the even cells and then for the odd cells. This works flawlessly, since the formula for pressure shows that no diagonal neighbours are being sampled.
 
 <figure>
@@ -100,7 +102,7 @@ or in other words that there is an equal amount of velocity leaving the cell as 
 
 In the visualisation, you'll notice that not all pressures drop to zero as you would expect (because velocity tries to equalise the pressure difference). This is because we cannot run the pressure solver enough times to make for an absolute equilibrium.
 
-What yoy can also notice from the simulation is that there forms a natural vortex pattern in the velocities. This effect will cause the smoke to spread out and create those curls that are usually associated with smoke.
+What you can also notice from the simulation is that there forms a natural vortex pattern in the velocities. This effect will cause the smoke to spread out and create the mushroom cloud shape that is usually associated with rising smoke.
 
 #### Advection
 To make the velocities move through the volume the logical approach is to take the current velocity at one of the faces and move that velocity one time step forward.
@@ -111,13 +113,13 @@ $$
 
 where $q$ is any arbitrary value that needs to be advected and $p$ is its position.
 
-This brings one major problem, namely that it is possible but very computationally difficult to distribute the velocity. But since this a sequence we can instead can just move one step backwards and put that velocity at the position on the chosen face
+This brings one major problem, namely that it is possible but very computationally difficult to distribute the velocity along all edges in the cell the velocity lands in. However, since this a sequence, we can instead can just move one step backwards and put that velocity at the position on the chosen face
 
 $$
 q^{n+1}_p=q^n_{p-\Delta t\vec{u}^n_p}
 $$
 
-This is computationally very simple, since that only takes two samples of the velocity. With this method, the second sample only needs to be the component of the face that is being computed.
+This is computationally very simple, since that only takes two samples of the velocity texture(s). With this method, the second sample only needs to be the component of the face that is being computed.
 
 <AdvectionVisualisation/>
 
@@ -140,7 +142,7 @@ Rendering the smoke is done through a simple raymarching algorithm. In my implem
     <figcaption>Raymarching [^5]</figcaption>
 </figure>
 
-Each step of the raymarcher, the checked point is shifter over some step size. Then I sample the concentration buffer to know how much if any smoke is at that point. All the concentration values are summed up and the sum is used to determine the final opacity and color of the pixel using the formula [^6]:
+Each step of the raymarcher, the checked point is shifter over some step size. Then I sample the concentration buffer to know how much if any smoke is at that point. All the concentration values are summed up, whereafter it is used to determine the final opacity and color of the pixel using the formula [^6]:
 
 $$
 E=2\cdot e^{-dp}\cdot (1-e^{-2d})\cdot\frac{1}{4\pi}\frac{1-g^2}{1+g^2-2g\cos(\theta)^{3/2}}
@@ -191,7 +193,7 @@ Below is a table with the results of the optimisations listed above. Note that t
 | Remove tmp velocity buffers | 3.85ms | <span style="color: #a6d189ff">-69.0%</span> | <span style="color: #a6d189ff">-35.9%</span> |
 
 ## Conclusion and Future Work
-All in all this project taught me plenty of things about how to do things properly on the GPU. I did not manage to do everything that I wanted, since in the eight weeks I had for the project I spent a vast majority of the time with a broken advection algorithm. Even though this lost me a lot of time, the result still gives this blog post that I hope serves well as a reference for making your own smoke/fluid simulation. During the project I also looked way differently at smoke since now I know what forces make up the movements of smoke.
+All in all this project taught me plenty of things about how to do things properly on the GPU. I did not manage to do everything that I wanted, since in the eight weeks I had for the project I spent a vast majority of the time with a broken advection algorithm. Even though this lost me a lot of time, the result still results in this blog post that I hope serves well as a reference for making your own smoke/fluid simulation. During the project I also looked way differently at smoke since now I know what forces make up the movements of smoke.
 
 In the future, I am planning to maybe add light tracing in the mix as well as adding emittance based on temperature. This can then be expanded with ember particles to make for a nice pyrotechnics simulator.
 
