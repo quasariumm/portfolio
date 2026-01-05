@@ -60,6 +60,17 @@
 </style>
 
 <script>
+  import {
+    gridSize,
+    CalculatePressure,
+    CalculateVelocities,
+    SolvePressureRedBlack,
+  } from "@/components/blog/smoke-simulation/solver";
+  import {
+    ConfigureSVG,
+    RandomiseVelocities,
+    ResetPressure,
+  } from "@/components/blog/smoke-simulation/visualisations";
   /*
     Arrow drawing and dragging logic was made by Claude.
     The simulation is based on the actual implementation in my project at BUas.
@@ -68,113 +79,29 @@
   /*
     Solver
   */
-  const DENSITY = 0.6;
-  const DELTA_X = 1.0;
-  const DELTA_TIME = 0.016;
-
-  function CalculatePressure(row, col) {
-    const pLeft = col == 0 ? 0.0 : cellValues[row][col - 1];
-    const pRight = col == 7 ? 0.0 : cellValues[row][col + 1];
-    const pUp = row == 0 ? 0.0 : cellValues[row - 1][col];
-    const pDown = row == 7 ? 0.0 : cellValues[row + 1][col];
-
-    const vLeft = horizontalArrows[row][col];
-    const vRight = horizontalArrows[row][col + 1];
-    const vUp = verticalArrows[row][col];
-    const vDown = verticalArrows[row + 1][col];
-
-    const pressure = pLeft + pRight + pUp + pDown;
-    const velocity = vRight - vLeft + vDown - vUp;
-
-    cellValues[row][col] =
-      (pressure - (DENSITY * DELTA_X * velocity) / DELTA_TIME) / 4.0;
-  }
-
-  function CalculateVelocities() {
+  function DetermineVelocities() {
     // console.log(cellValues);
     // console.log(horizontalArrows);
     // console.log(verticalArrows);
 
     for (let i = 0; i < 16; i++) {
-      UpdatePressure();
-    }
-    
-    const k = DELTA_TIME / DENSITY;
-
-    for (let row = 0; row <= gridSize; row++) {
-      for (let col = 0; col < gridSize; col++) {
-        const pCenter =
-          row == 8 || col == 8 ? 0.0 : cellValues[row][col];
-        const pUp = row == 0 ? 0.0 : cellValues[row - 1][col];
-        verticalArrows[row][col] -= k * (pCenter - pUp);
-      }
+      SolvePressureRedBlack(cellValues, horizontalArrows, verticalArrows);
     }
 
-    for (let row = 0; row < gridSize; row++) {
-      for (let col = 0; col <= gridSize; col++) {
-        const pCenter =
-          row == 8 || col == 8 ? 0.0 : cellValues[row][col];
-        const pLeft = col == 0 ? 0.0 : cellValues[row][col - 1];
-        horizontalArrows[row][col] -= k * (pCenter - pLeft);
-      }
-    }
-
-    // Update the arrows
-    svg.querySelectorAll("line[data-type]").forEach((line) => {
-      const type = line.dataset.type;
-
-      const x1 = parseFloat(line.getAttribute("x1"));
-      const y1 = parseFloat(line.getAttribute("y1"));
-
-      if (type === "vertical") {
-        const lineIdx = parseInt(line.dataset.lineIdx);
-        const col = parseInt(line.dataset.col);
-
-        const newY = y1 + verticalArrows[lineIdx][col] * cellSize;
-
-        line.setAttribute("x2", x1);
-        line.setAttribute("y2", newY);
-
-        if (
-          line.nextElementSibling &&
-          line.nextElementSibling.tagName === "line"
-        ) {
-          line.nextElementSibling.setAttribute("x2", x1);
-          line.nextElementSibling.setAttribute("y2", newY);
-        }
-      } else {
-        const row = parseInt(line.dataset.row);
-        const lineIdx = parseInt(line.dataset.lineIdx);
-
-        const newX = x1 + horizontalArrows[row][lineIdx] * cellSize;
-
-        line.setAttribute("x2", newX);
-        line.setAttribute("y2", y1);
-
-        if (
-          line.nextElementSibling &&
-          line.nextElementSibling.tagName === "line"
-        ) {
-          line.nextElementSibling.setAttribute("x2", newX);
-          line.nextElementSibling.setAttribute("y2", y1);
-        }
-      }
-    });
-  }
-
-  function UpdatePressure() {
-    for (let row = 0; row < gridSize; row++) {
-      for (let col = 0; col < gridSize; col++) {
-        CalculatePressure(row, col);
-      }
-    }
+    CalculateVelocities(
+      cellValues,
+      cellSize,
+      horizontalArrows,
+      verticalArrows,
+      svg
+    );
   }
 
   setInterval(() => {
     const toggle = document.getElementById("velocity-realtime");
 
     if (toggle.checked) {
-      CalculateVelocities();
+      DetermineVelocities();
     }
 
     const select = document.querySelector("#display-select");
@@ -252,7 +179,6 @@
   /*
     Cell Vals
   */
-  const gridSize = 8;
   const grid = document.getElementById("velocity-grid");
   const svg = document.getElementById("velocity-arrow-svg");
 
@@ -283,7 +209,13 @@
       cell.dataset.row = row;
       cell.dataset.col = col;
       cell.onclick = () => {
-        CalculatePressure(row, col);
+        CalculatePressure(
+          cellValues,
+          horizontalArrows,
+          verticalArrows,
+          row,
+          col
+        );
         const value = cellValues[row][col];
         cell.textContent = value.toFixed(2);
         if (document.documentElement.classList.contains("dark")) {
@@ -311,138 +243,7 @@
   const gridRect = grid.getBoundingClientRect();
   cellSize = gridRect.width / gridSize;
 
-  /*
-    Arrows SVG
-  */
-  svg.setAttribute("width", gridSize * cellSize);
-  svg.setAttribute("height", gridSize * cellSize);
-
-  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-  const marker = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "marker"
-  );
-  marker.setAttribute("id", "arrowhead");
-  marker.setAttribute("markerWidth", "6");
-  marker.setAttribute("markerHeight", "6");
-  marker.setAttribute("refX", "5");
-  marker.setAttribute("refY", "2");
-  marker.setAttribute("orient", "auto");
-  const polygon = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "polygon"
-  );
-  polygon.setAttribute("points", "0 0, 6 2, 0 4");
-  polygon.setAttribute("fill", "#4a90e2");
-  marker.appendChild(polygon);
-  defs.appendChild(marker);
-  svg.appendChild(defs);
-
-  // Create vertical arrows
-  for (let lineIdx = 0; lineIdx <= gridSize; lineIdx++) {
-    for (let col = 0; col < gridSize; col++) {
-      const x = col * cellSize + cellSize / 2;
-      const y = lineIdx * cellSize;
-      createVerticalArrow(lineIdx, col, x, y);
-    }
-  }
-
-  // Create horizontal arrows
-  for (let row = 0; row < gridSize; row++) {
-    for (let lineIdx = 0; lineIdx <= gridSize; lineIdx++) {
-      const x = lineIdx * cellSize;
-      const y = row * cellSize + cellSize / 2;
-      createHorizontalArrow(row, lineIdx, x, y);
-    }
-  }
-
-  function createVerticalArrow(lineIdx, col, x, y) {
-    const circle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle"
-    );
-    circle.setAttribute("cx", x);
-    circle.setAttribute("cy", y);
-    circle.setAttribute("r", "3");
-    circle.setAttribute("fill", "#4a90e2");
-    svg.appendChild(circle);
-
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", x);
-    line.setAttribute("y1", y);
-    line.setAttribute("x2", x);
-    line.setAttribute("y2", y);
-    line.setAttribute("stroke", "#4a90e2");
-    line.setAttribute("stroke-width", "2");
-    line.setAttribute("marker-end", "url(#arrowhead)");
-    line.dataset.type = "vertical";
-    line.dataset.lineIdx = lineIdx;
-    line.dataset.col = col;
-    svg.appendChild(line);
-
-    const hitArea = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "line"
-    );
-    hitArea.setAttribute("x1", x);
-    hitArea.setAttribute("y1", y);
-    hitArea.setAttribute("x2", x);
-    hitArea.setAttribute("y2", y);
-    hitArea.setAttribute("stroke", "transparent");
-    hitArea.setAttribute("stroke-width", "10");
-    hitArea.style.pointerEvents = "all";
-    hitArea.style.cursor = "grab";
-    hitArea.dataset.type = "vertical";
-    hitArea.dataset.lineIdx = lineIdx;
-    hitArea.dataset.col = col;
-    svg.appendChild(hitArea);
-
-    hitArea.addEventListener("mousedown", startDrag);
-  }
-
-  function createHorizontalArrow(row, lineIdx, x, y) {
-    const circle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle"
-    );
-    circle.setAttribute("cx", x);
-    circle.setAttribute("cy", y);
-    circle.setAttribute("r", "3");
-    circle.setAttribute("fill", "#4a90e2");
-    svg.appendChild(circle);
-
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", x);
-    line.setAttribute("y1", y);
-    line.setAttribute("x2", x);
-    line.setAttribute("y2", y);
-    line.setAttribute("stroke", "#4a90e2");
-    line.setAttribute("stroke-width", "2");
-    line.setAttribute("marker-end", "url(#arrowhead)");
-    line.dataset.type = "horizontal";
-    line.dataset.row = row;
-    line.dataset.lineIdx = lineIdx;
-    svg.appendChild(line);
-
-    const hitArea = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "line"
-    );
-    hitArea.setAttribute("x1", x);
-    hitArea.setAttribute("y1", y);
-    hitArea.setAttribute("x2", x);
-    hitArea.setAttribute("y2", y);
-    hitArea.setAttribute("stroke", "transparent");
-    hitArea.setAttribute("stroke-width", "30");
-    hitArea.style.pointerEvents = "all";
-    hitArea.style.cursor = "grab";
-    hitArea.dataset.type = "horizontal";
-    hitArea.dataset.row = row;
-    hitArea.dataset.lineIdx = lineIdx;
-    svg.appendChild(hitArea);
-
-    hitArea.addEventListener("mousedown", startDrag);
-  }
+  ConfigureSVG(svg, cellSize, startDrag);
 
   /*
     Dragging
@@ -521,109 +322,27 @@
     Button functions
   */
 
-  document
-    .getElementById("velocity-reset")
-    ?.addEventListener("click", ResetPressure);
-  document
-    .getElementById("velocity-random")
-    ?.addEventListener("click", RandomiseVelocities);
+  document.getElementById("velocity-reset")?.addEventListener("click", () => {
+    ResetPressure(cellValues, horizontalArrows, verticalArrows, svg);
+  });
+  document.getElementById("velocity-random")?.addEventListener("click", () => {
+    RandomiseVelocities(
+      cellValues,
+      horizontalArrows,
+      verticalArrows,
+      svg,
+      cellSize
+    );
+  });
   document
     .getElementById("velocity-calculate")
-    ?.addEventListener("click", CalculateVelocities);
+    ?.addEventListener("click", DetermineVelocities);
 
-  function ResetPressure() {
-    for (let row = 0; row < gridSize; row++) {
-      for (let col = 0; col < gridSize; col++) {
-        cellValues[row][col] = 0;
-      }
-    }
-
-    for (let i = 0; i <= gridSize; i++) {
-      for (let j = 0; j <= gridSize; j++) {
-        if (i <= gridSize && j < gridSize) verticalArrows[i][j] = 0;
-        if (i < gridSize && j <= gridSize) horizontalArrows[i][j] = 0;
-      }
-    }
-
-    document.querySelectorAll(".cell").forEach((cell) => {
-      cell.textContent = "0.00";
-      cell.style.backgroundColor = "rgba(0,0,0,0)";
-      if (document.documentElement.classList.contains("dark")) {
-        cell.style.color = "var(--color-text-dark)";
-      } else {
-        cell.style.color = "var(--color-text)";
-      }
-    });
-
-    svg.querySelectorAll("line[data-type]").forEach((line) => {
-      const x1 = parseFloat(line.getAttribute("x1"));
-      const y1 = parseFloat(line.getAttribute("y1"));
-      const type = line.dataset.type;
-      line.setAttribute("x2", x1);
-      line.setAttribute("y2", y1);
-
-      if (
-        line.nextElementSibling &&
-        line.nextElementSibling.tagName === "line"
-      ) {
-        const hitArea = line.nextElementSibling;
-        if (type === "vertical") {
-          hitArea.setAttribute("x2", x1);
-          hitArea.setAttribute("y2", y1 + 15); // 15px minimum
-        } else {
-          hitArea.setAttribute("x2", x1 + 15); // 15px minimum
-          hitArea.setAttribute("y2", y1);
-        }
-      }
-    });
-  }
-
-  function RandomiseVelocities() {
-    ResetPressure();
-    svg.querySelectorAll("line[data-type]").forEach((line) => {
-      const type = line.dataset.type;
-      const maxLength = cellSize;
-      const magnitude = (Math.random() - 0.5) * 0.8;
-
-      const x1 = parseFloat(line.getAttribute("x1"));
-      const y1 = parseFloat(line.getAttribute("y1"));
-
-      if (type === "vertical") {
-        const lineIdx = parseInt(line.dataset.lineIdx);
-        const col = parseInt(line.dataset.col);
-        const newY = y1 + magnitude * maxLength;
-
-        line.setAttribute("x2", x1);
-        line.setAttribute("y2", newY);
-
-        if (
-          line.nextElementSibling &&
-          line.nextElementSibling.tagName === "line"
-        ) {
-          line.nextElementSibling.setAttribute("x2", x1);
-          line.nextElementSibling.setAttribute("y2", newY);
-        }
-
-        verticalArrows[lineIdx][col] = magnitude;
-      } else {
-        const row = parseInt(line.dataset.row);
-        const lineIdx = parseInt(line.dataset.lineIdx);
-        const newX = x1 + magnitude * maxLength;
-
-        line.setAttribute("x2", newX);
-        line.setAttribute("y2", y1);
-
-        if (
-          line.nextElementSibling &&
-          line.nextElementSibling.tagName === "line"
-        ) {
-          line.nextElementSibling.setAttribute("x2", newX);
-          line.nextElementSibling.setAttribute("y2", y1);
-        }
-
-        horizontalArrows[row][lineIdx] = magnitude;
-      }
-    });
-  }
-  RandomiseVelocities();
+  RandomiseVelocities(
+    cellValues,
+    horizontalArrows,
+    verticalArrows,
+    svg,
+    cellSize
+  );
 </script>
