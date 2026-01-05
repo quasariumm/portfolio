@@ -75,7 +75,7 @@ This algorithm first computes the values for the even cells and then for the odd
 </figure>
 
 #### Velocity
-This is where the magic of the MAC grid comes to light. Since we have the pressure of all cell centers, getting the velocity simply
+This is where the magic of the MAC grid comes to light. Since we have the pressure of all cell centers, getting the velocity simply using the pressure difference to alter the velocities. Written out for all axes:
 
 $$
 u_{i+1/2,j,k}=u_{i+1/2,j,k}-\Delta t\cdot\frac{p_{i,j,k}-p_{i-1,j,k}}{\rho\Delta x}
@@ -196,7 +196,7 @@ All in all this project taught me plenty of things about how to do things proper
 
 In the future, I am planning to maybe add light tracing in the mix as well as adding emittance based on temperature. This can then be expanded with ember particles to make for a nice pyrotechnics simulator.
 
-I also do believe that a lot more performance can be squished out of the simulation with the right knowledge and tools. Sadly I did not have time to dive into the nitty-gritty details of my code
+I also do believe that a lot more performance can be squished out of the simulation with the right knowledge and tools. Sadly I did not have time to dive into the nitty-gritty details of my code.
 
 ## References
 [^1]: S. Lague, "Coding Adventure: Simulating Smoke", 2025, https://www.youtube.com/watch?v=Q78wvrQ9xsU
