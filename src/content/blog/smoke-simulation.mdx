@@ -141,7 +141,7 @@ Rendering the smoke is done through a simple raymarching algorithm. In my implem
     <figcaption>Raymarching [^5]</figcaption>
 </figure>
 
-Each step of the raymarcher, the checked point is shifter over some step size. Then I sample the concentration buffer to know how much if any smoke is at that point. All the concentration values are summed up, whereafter it is used to determine the final opacity and color of the pixel using the formula [^6]:
+Each step of the raymarcher, the checked point is shifted over some step size. Then I sample the concentration buffer to know how much if any smoke is at that point. All the concentration values are summed up, whereafter it is used to determine the final opacity and color of the pixel using the formula [^6]:
 
 $$
 E=2\cdot e^{-dp}\cdot (1-e^{-2d})\cdot\frac{1}{4\pi}\frac{1-g^2}{1+g^2-2g\cos(\theta)^{3/2}}
