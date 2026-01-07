@@ -106,12 +106,12 @@
     const advect = document.getElementById("advect-advect");
     if (advect.checked) {
       AdvectVelocities(
-        cellSize,
         horizontalArrows,
         horizontalArrowsTemp,
         verticalArrows,
         verticalArrowsTemp
       );
+      advect.checked = false;
     }
 
     const select = document.querySelector("#advect-display-select");

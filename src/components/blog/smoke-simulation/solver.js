@@ -26,7 +26,7 @@ export function CalculatePressure(cellValues, horizontalArrows, verticalArrows, 
     const pressure = pLeft + pRight + pUp + pDown;
     const velocity = vRight - vLeft + vDown - vUp;
 
-    cellValues[row][col] = (pressure - DENSITY * DELTA_X * velocity / DELTA_TIME) / 4.0;
+    cellValues[row][col] = (pressure - DENSITY * DELTA_X * velocity / DELTA_TIME) / 4.0;//(4.0 - (xEdge ? 1 : 0) - (yEdge ? 1 : 0));
 }
 
 export function SolvePressureRedBlack(cellValues, horizontalArrows, verticalArrows) {
@@ -130,38 +130,45 @@ function lerp(a, b, t) {
     return a + (b - a) * t;
 }
 
-function GetVelocityXAtWorldPos(worldPos, cellSize, horizontalArrows) {
-    let size = gridSize * cellSize;
+function GetVelocityXAtLocalPos(localPos, horizontalArrows) {
+    let px = localPos[0];
+    let py = localPos[1];
 
-    let px = (worldPos[0] + size / 2.0) / cellSize;
-    let py = (worldPos[1] + size / 2.0) / cellSize;
-
-    let left = Math.min(Math.max(0.0, Math.trunc(px)), gridSize - 1);
+    let left = Math.floor(px);
     let right = left + 1;
-    let bottom = Math.min(Math.max(0.0, Math.trunc(py)), gridSize - 1);
+    let bottom = Math.floor(py);
     let top = bottom + 1;
 
-    let xFrac = (px - left) % 1.0;
-    let yFrac = (py - bottom) % 1.0;
+    // Clamp indices to valid range
+    left = Math.max(0, Math.min(8, left));
+    right = Math.max(0, Math.min(8, right));
+    bottom = Math.max(0, Math.min(7, bottom));
+    top = Math.max(0, Math.min(7, top));
+
+    let xFrac = px - Math.floor(px);
+    let yFrac = py - Math.floor(py);
 
     let valueTop = lerp(horizontalArrows[top][left], horizontalArrows[top][right], xFrac);
     let valueBottom = lerp(horizontalArrows[bottom][left], horizontalArrows[bottom][right], xFrac);
     return lerp(valueBottom, valueTop, yFrac);
 }
 
-function GetVelocityYAtWorldPos(worldPos, cellSize, verticalArrows) {
-    let size = gridSize * cellSize;
+function GetVelocityYAtLocalPos(localPos, verticalArrows) {
+    let px = localPos[0];
+    let py = localPos[1];
 
-    let px = (worldPos[0] + size / 2.0) / cellSize;
-    let py = (worldPos[1] + size / 2.0) / cellSize;
-
-    let left = Math.min(Math.max(0.0, Math.trunc(px)), gridSize - 1);
+    let left = Math.floor(px);
     let right = left + 1;
-    let bottom = Math.min(Math.max(0.0, Math.trunc(py)), gridSize - 1);
+    let bottom = Math.floor(py);
     let top = bottom + 1;
 
-    let xFrac = (px - left) % 1.0;
-    let yFrac = (py - bottom) % 1.0;
+    left = Math.max(0, Math.min(7, left));
+    right = Math.max(0, Math.min(7, right));
+    bottom = Math.max(0, Math.min(8, bottom));
+    top = Math.max(0, Math.min(8, top));
+
+    let xFrac = px - Math.floor(px);
+    let yFrac = py - Math.floor(py);
 
     let valueTop = lerp(verticalArrows[top][left], verticalArrows[top][right], xFrac);
     let valueBottom = lerp(verticalArrows[bottom][left], verticalArrows[bottom][right], xFrac);
@@ -169,29 +176,38 @@ function GetVelocityYAtWorldPos(worldPos, cellSize, verticalArrows) {
 }
 
 export function AdvectVelocities(
-    cellSize, 
-    horizontalArrows, horizontalArrowsTemp, 
+    horizontalArrows, horizontalArrowsTemp,
     verticalArrows, verticalArrowsTemp
 ) {
     for (let row = 0; row <= gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
-            let pos = [row, col + 0.5];
-            let velX = GetVelocityXAtWorldPos(pos, cellSize, horizontalArrows);
-            let velY = GetVelocityYAtWorldPos(pos, cellSize, verticalArrows);
+            let pos = [col + 0.5, row];
+            console.log(`Vertical ${pos[0]} ${pos[1]}`);
+            let velX = GetVelocityXAtLocalPos(pos, horizontalArrows);
+            let velY = GetVelocityYAtLocalPos(pos, verticalArrows);
+            console.log(`sampled ${velX} ${velY}`);
             pos[0] -= DELTA_TIME * velX;
             pos[1] -= DELTA_TIME * velY;
-            verticalArrowsTemp[row][col] = GetVelocityYAtWorldPos(pos, cellSize, verticalArrows);
+            console.log(`backtracked to ${pos[0]} ${pos[1]}`);
+            let newVel = GetVelocityYAtLocalPos(pos, verticalArrows);
+            console.log(`got the new velocity ${newVel}`);
+            verticalArrowsTemp[row][col] = newVel;
         }
     }
 
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col <= gridSize; col++) {
-            let pos = [row + 0.5, col];
-            let velX = GetVelocityXAtWorldPos(pos, cellSize, horizontalArrows);
-            let velY = GetVelocityYAtWorldPos(pos, cellSize, verticalArrows);
+            let pos = [col, row + 0.5];
+            console.log(`Horizontal ${pos[0]} ${pos[1]}`);
+            let velX = GetVelocityXAtLocalPos(pos, horizontalArrows);
+            let velY = GetVelocityYAtLocalPos(pos, verticalArrows);
+            console.log(`sampled ${velX} ${velY}`);
             pos[0] -= DELTA_TIME * velX;
             pos[1] -= DELTA_TIME * velY;
-            horizontalArrowsTemp[row][col] = GetVelocityXAtWorldPos(pos, cellSize, horizontalArrows);
+            console.log(`backtracked to ${pos[0]} ${pos[1]}`);
+            let newVel = GetVelocityXAtLocalPos(pos, horizontalArrows);
+            console.log(`got the new velocity ${newVel}`);
+            horizontalArrowsTemp[row][col] = newVel;
         }
     }
 
