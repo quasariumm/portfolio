@@ -132,7 +132,7 @@ function lerp(a, b, t) {
 
 function GetVelocityXAtLocalPos(localPos, horizontalArrows) {
     let px = localPos[0];
-    let py = localPos[1];
+    let py = localPos[1] - 0.5;
 
     let left = Math.floor(px);
     let right = left + 1;
@@ -154,7 +154,7 @@ function GetVelocityXAtLocalPos(localPos, horizontalArrows) {
 }
 
 function GetVelocityYAtLocalPos(localPos, verticalArrows) {
-    let px = localPos[0];
+    let px = localPos[0] - 0.5;
     let py = localPos[1];
 
     let left = Math.floor(px);
