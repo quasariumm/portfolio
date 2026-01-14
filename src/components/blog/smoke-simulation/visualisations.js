@@ -45,10 +45,7 @@ export function ConfigureSVG(svg, cellSize, startDrag) {
 }
 
 function createVerticalArrow(svg, startDrag, lineIdx, col, x, y) {
-    const circle = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "circle"
-    );
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("cx", x);
     circle.setAttribute("cy", y);
     circle.setAttribute("r", "3");
@@ -68,16 +65,12 @@ function createVerticalArrow(svg, startDrag, lineIdx, col, x, y) {
     line.dataset.col = col;
     svg.appendChild(line);
 
-    const hitArea = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "line"
-    );
-    hitArea.setAttribute("x1", x);
-    hitArea.setAttribute("y1", y);
-    hitArea.setAttribute("x2", x);
-    hitArea.setAttribute("y2", y);
-    hitArea.setAttribute("stroke", "transparent");
-    hitArea.setAttribute("stroke-width", "10");
+    // Create hit area at the tip of the arrow
+    const hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    hitArea.setAttribute("cx", x);
+    hitArea.setAttribute("cy", y);
+    hitArea.setAttribute("r", "15");  // Constant hit area size
+    hitArea.setAttribute("fill", "transparent");
     hitArea.style.pointerEvents = "all";
     hitArea.style.cursor = "grab";
     hitArea.dataset.type = "vertical";
@@ -89,10 +82,7 @@ function createVerticalArrow(svg, startDrag, lineIdx, col, x, y) {
 }
 
 function createHorizontalArrow(svg, startDrag, row, lineIdx, x, y) {
-    const circle = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "circle"
-    );
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("cx", x);
     circle.setAttribute("cy", y);
     circle.setAttribute("r", "3");
@@ -112,16 +102,12 @@ function createHorizontalArrow(svg, startDrag, row, lineIdx, x, y) {
     line.dataset.lineIdx = lineIdx;
     svg.appendChild(line);
 
-    const hitArea = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "line"
-    );
-    hitArea.setAttribute("x1", x);
-    hitArea.setAttribute("y1", y);
-    hitArea.setAttribute("x2", x);
-    hitArea.setAttribute("y2", y);
-    hitArea.setAttribute("stroke", "transparent");
-    hitArea.setAttribute("stroke-width", "30");
+    // Create hit area at the tip of the arrow
+    const hitArea = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    hitArea.setAttribute("cx", x);
+    hitArea.setAttribute("cy", y);
+    hitArea.setAttribute("r", "15");  // Constant hit area size
+    hitArea.setAttribute("fill", "transparent");
     hitArea.style.pointerEvents = "all";
     hitArea.style.cursor = "grab";
     hitArea.dataset.type = "horizontal";
@@ -170,11 +156,11 @@ export function ResetPressure(cellValues, horizontalArrows, verticalArrows, svg)
         ) {
             const hitArea = line.nextElementSibling;
             if (type === "vertical") {
-                hitArea.setAttribute("x2", x1);
-                hitArea.setAttribute("y2", y1 + 15); // 15px minimum
+                hitArea.setAttribute("cx", x1);
+                hitArea.setAttribute("cy", y1);
             } else {
-                hitArea.setAttribute("x2", x1 + 15); // 15px minimum
-                hitArea.setAttribute("y2", y1);
+                hitArea.setAttribute("cx", x1);
+                hitArea.setAttribute("cy", y1);
             }
         }
     });
@@ -202,8 +188,8 @@ export function RandomiseVelocities(cellValues, horizontalArrows, verticalArrows
                 line.nextElementSibling &&
                 line.nextElementSibling.tagName === "line"
             ) {
-                line.nextElementSibling.setAttribute("x2", x1);
-                line.nextElementSibling.setAttribute("y2", newY);
+                line.nextElementSibling.setAttribute("cx", x1);
+                line.nextElementSibling.setAttribute("cy", newY);
             }
 
             verticalArrows[lineIdx][col] = magnitude;
@@ -219,8 +205,8 @@ export function RandomiseVelocities(cellValues, horizontalArrows, verticalArrows
                 line.nextElementSibling &&
                 line.nextElementSibling.tagName === "line"
             ) {
-                line.nextElementSibling.setAttribute("x2", newX);
-                line.nextElementSibling.setAttribute("y2", y1);
+                line.nextElementSibling.setAttribute("cx", newX);
+                line.nextElementSibling.setAttribute("cy", y1);
             }
 
             horizontalArrows[row][lineIdx] = magnitude;

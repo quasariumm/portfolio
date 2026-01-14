@@ -218,8 +218,8 @@
 
       line.setAttribute("x2", startX);
       line.setAttribute("y2", newY);
-      hitArea.setAttribute("x2", startX);
-      hitArea.setAttribute("y2", newY);
+      hitArea.setAttribute("cx", startX);
+      hitArea.setAttribute("cy", newY);
 
       verticalArrows[lineIdx][col] = dy / cellSize;
     } else {
@@ -232,8 +232,8 @@
 
       line.setAttribute("x2", newX);
       line.setAttribute("y2", startY);
-      hitArea.setAttribute("x2", newX);
-      hitArea.setAttribute("y2", startY);
+      hitArea.setAttribute("cx", newX);
+      hitArea.setAttribute("cy", startY);
 
       horizontalArrows[row][lineIdx] = dx / cellSize;
     }
