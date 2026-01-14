@@ -16,6 +16,23 @@ This post is aimed towards people with at minimum a basic game development aspir
 
 All interactive elements on this page are inspired by the wonderful visualisations from Sebastian. The web dev part is made with help from Claude, since my web development skills are not great at the time of writing. I recommend to read this on desktop to fully profit from these.
 
+## Notation
+This section is meant to clarify or explain certain mathematical notations. If you are familiar with them, feel free to skip this part.
+
+I take $q$ as any arbitrary value. This means that any function using this is applicable for multiple parameters.
+
+$n\in\mathbb{N}$ means that the number $n$ is a positive integer.
+
+$|\vec{v}|$ denotes the length of vector $\vec{v}$
+
+$\frac{\partial q}{\partial x}$ is the partial derivative with respect to x. This can be seen as "the rate of change on the x axis" or in some cases "the difference in the x axis" (mostly used for velocities). For example for the velocity, it can be written out in code as
+
+```hlsl
+float ddx = MAC::VelocityXBuffer[center + int3(1,0,0)] - MAC::VelocityXBuffer[center]
+```
+
+$\nabla q$ denotes the gradient. In 3D, this is $\left(\frac{\partial q}{\partial x},\frac{\partial q}{\partial y},\frac{\partial q}{\partial z}\right)$.
+
 ## Simulation
 ### Grid
 At the core of the simulation lies a MAC grid storage system. A MAC grid is a kind of voxel grid storage technique where different values are stored at different positions in the grid. In my case, the grid has the pressures, cell types, temperature and concentration stored at the center of each cell, whereas the velocities are stored on the face centers of the cells. This means that the dimensions of the pressure and type buffers need to be $(N\times M\times P)$ where $M,N,P\in\mathbb{N}$ and the velocity component buffers need to have one extra entry in their respective axis to ensure all sides have values. I will follow the convention that any parameter $q$ at the center of cell $(i,j,k)$ in the grid can be written as $q_{i,j,k}$.
@@ -124,12 +141,38 @@ This is computationally very simple, since that only takes two samples of the ve
 Specifically for smoke temperature $T$ and concentration $s$ are needed to make it act properly. Both of the variables are stored at the center of a cell and are advected the same way as the velocity. Spawners inject concentration into the grid, whereafter the buoyancy force [^2] is applied to the velocities to produce the initial velocity.
 
 $$
-\vec{b}=[\alpha s-\beta(T-T_{amb})]\vec{g}
+f_{b}=[\alpha s-\beta(T-T_{amb})]\vec{g}
 $$
 
-where $\alpha$ and $\beta$ ar non-zero constants that you can set to your liking, $T_{amb}=273\mathrm{K}$ and $\vec{g}=-9.81$
+where $\alpha$ and $\beta$ ar non-zero constants that you can set to your liking, $T_{amb}=273\mathrm{K}$ and $\vec{g}=(0,-9.81,0)$
 
 This mutual dependency makes sure that velocities are calculated around the concentration field to make sure that the advection can function properly.
+
+#### Vorticity
+To accentuate the curliness of the smoke, vorticity can be applied[^7]. This force tries to spin the smoke in a certain direction. It is calculated by first taking the angular velocity
+
+$$
+\omega=\nabla\cdot\vec{u}
+$$
+
+whereafter that can be used to calculate the normalised vorticity location vector
+
+$$
+N=\frac{\eta}{\left|\eta\right|}\quad (\eta=\nabla\left|\omega\right|)
+$$
+
+This vector can then be used to get the force that the vorticity is applying to the velocity field by crossing the location vector with the vorticity vector:
+
+$$
+f_{v}=\epsilon\cdot\left(N\times\omega\right)
+$$
+
+where $\epsilon>0$ controls how strong the effect of the vorticity is.
+
+<figure>
+    <img alt="Vorticity" src="/blog-images/smoke-simulation/vorticity.png"/>
+    <figcaption>Vorticity applied to the smoke rendering</figcaption>
+</figure>
 
 ## Rendering
 Rendering the smoke is done through a simple raymarching algorithm. In my implementation, the origin of the rays are snapped to the bounds of the fluid to not have to trace through a guaranteed empty space.
@@ -205,3 +248,5 @@ I also do believe that a lot more performance can be squished out of the simulat
 [^5]: R. Brucks, "Creating a Volumetric Ray Marcher", 2016, https://shaderbits.com/blog/creating-volumetric-ray-marcher
 
 [^6]: E. Ge, D. Liang, Z. Zhang, "Fire Simulation and Rendering", 2020, https://cs184-firesim.github.io/final-report/
+
+[^7]: R. Fedkiw, J. Stam, H.W. Jensen, "Visual simulation of smoke", 2001, https://dl.acm.org/doi/pdf/10.1145/383259.383260
