@@ -310,3 +310,35 @@ nav a {
 ::selection {
 	@apply bg-lavender/30 dark:bg-lavender-dark/30;
 }
+
+
+
+&:where(.dark, .dark *) {
+	.smoke-sim-lighting-eq .MathJax svg g[fill="#111"] {
+		fill: var(--color-green-dark) !important;
+		stroke: var(--color-green-dark) !important;
+	}
+	.smoke-sim-lighting-eq .MathJax svg g[fill="#222"] {
+		fill: var(--color-blue-dark) !important;
+		stroke: var(--color-blue-dark) !important;
+	}
+	.smoke-sim-lighting-eq .MathJax svg g[fill="#333"] {
+		fill: var(--color-peach-dark) !important;
+		stroke: var(--color-peach-dark) !important;
+	}
+}
+
+&:not(.dark):not(.dark *) {
+	.smoke-sim-lighting-eq .MathJax svg g[fill="#111"] {
+		fill: var(--color-green) !important;
+		stroke: var(--color-green) !important;
+	}
+	.smoke-sim-lighting-eq .MathJax svg g[fill="#222"] {
+		fill: var(--color-blue) !important;
+		stroke: var(--color-blue) !important;
+	}
+	.smoke-sim-lighting-eq .MathJax svg g[fill="#333"] {
+		fill: var(--color-peach) !important;
+		stroke: var(--color-peach) !important;
+	}
+}

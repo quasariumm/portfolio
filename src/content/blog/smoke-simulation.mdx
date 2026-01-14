@@ -139,16 +139,25 @@ Rendering the smoke is done through a simple raymarching algorithm. In my implem
     <figcaption>Raymarching [^5]</figcaption>
 </figure>
 
-Each step of the raymarcher, the checked point is shifted over some step size. Then I sample the concentration buffer to know how much if any smoke is at that point. All the concentration values are summed up, whereafter it is used to determine the final opacity and color of the pixel using the formula [^6]:
+Each step of the raymarcher, the checked point is shifted over some step size [^4]. To make the trace more optimal, I make use of variable step sizes, since the precision needed decreases when either further away from the camera or deeper in the volume. Every time the trace switches state (inside or outside) the step sizes are reset to make the edges of the smoke look good.
 
-$$
-E=\textcolor{#a6e3a1}{2\cdot e^{-dp}}\cdot \textcolor{#89b4fa}{(1-e^{-2d})}\cdot\textcolor{#fab387}{\frac{1}{4\pi}\frac{1-g^2}{\left(1+g^2-2g\cos\left(\theta\right)\right)^{3/2}}}
-$$
+<figure>
+    <img alt="Variable step sizes" src="/blog-images/smoke-simulation/variable-step-size.png"/>
+    <figcaption>Variable step sizes</figcaption>
+</figure>
 
-where $d$ is the total distance, $p$ is the absorbance coefficient, $\theta$ is the angle between the ray direction and the sunlight direction and $g$ is the eccentricity that defaults to 0.2.
+Then I sample the concentration buffer to know how much if any smoke is at that point. All the concentration values are summed up, whereafter it is used to determine the final opacity and color of the pixel using the formula [^6]:
+
+<div class="smoke-sim-lighting-eq">
+$$
+E=\textcolor{#111}{2\cdot e^{-dp}}\cdot \textcolor{#222}{(1-e^{-2d})}\cdot\textcolor{#333}{\frac{1}{4\pi}\frac{1-g^2}{\left(1+g^2-2g\cos\left(\theta\right)\right)^{3/2}}}
+$$
+</div>
+
+where $d$ is the total acquired concentration, $p$ is the absorbance coefficient, $\theta$ is the angle between the ray direction and the sunlight direction and $g$ is the eccentricity that defaults to 0.2.
 
 This equation is made up of the three following effects:
-- Beer's law (green): Makes the smoke color darker the more density is captured in the raymarching.
+- Beer's law (green): Makes the smoke color darker the more concentration is captured in the raymarching.
 - In-scattering (blue): Gives the smoke dark edges.
 - Henyey-Greenstein Phase Function (orange): Adds silver-lining to the smoke, giving it brighter edges.
 
@@ -162,6 +171,8 @@ During the project, I have made several significant optimisations to my fluid so
 - Making use of caching. This gains very much in the fluid solver because of the large amount of times a certain pixel is sampled. For example, the part of the pressure equation that involves velocity (negative divergence) can easily be cached since it stays constant throughout the iterations, removing the need to calculate that each iteration of the solver.
 - Choosing the correct buffer type to minimise VRAM throughput.
 - Utilising the GPU optimally. In my raymarcher, it is significantly better to do the steps on the GPU instead of one dispatch per step. This also optimises away some buffers that were needed.
+- A thing that $\mathrm{Nubis}^3$ [^4] proposed is to take variable steps through the volume. This does mean that the initial values and step increments need to be chosen correctly. In the case of my smoke sim there needs to be proper handling of when the ray is near the edges of the bounds, since this can create precision artifacts when rendering. 
+- If viable for looks implementations can render the smoke at half resolution and upscale later. This should give a 4x increase in performance.
 
 Below is a table with the results of the optimisations listed above. Note that the measurements are done at different times into the development and might not resemble the final performance. Do however take these as a reference on how certain changes might impact performance.
 | **Addition/Change** | **From** | **To** | **Relative** |
@@ -172,6 +183,8 @@ Below is a table with the results of the optimisations listed above. Note that t
 | [Solver] TypeBuffer to R8_UINT | 13.16ms | 12.91ms | <span style="color: #a6d189ff">-1.9%</span> |
 | [Marcher] Baseline | 17.04ms | N/A | N/A |
 | [Marcher] Steps on the GPU | 14.80ms | 8.71ms | <span style="color: #a6d189ff">-41.1%</span> |
+| [Marcher] Variable step size | 7.78ms | 3.04ms | <span style="color: #a6d189ff">-60.9%</span> |
+| [Marcher] Half resolution | 3.04ms | 0.78ms | <span style="color: #a6d189ff">-74.3%</span> |
 
 ## Conclusion and Future Work
 All in all this project taught me plenty of things about how to do things properly on the GPU. I did not manage to do everything that I wanted, since in the eight weeks I had for the project I spent a vast majority of the time with a broken advection algorithm. Even though this lost me a lot of time, the result still results in this blog post that I hope serves well as a reference for making your own smoke/fluid simulation. During the project I also looked way differently at smoke since now I know what forces make up the movements of smoke.
