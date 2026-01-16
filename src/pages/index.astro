@@ -16,9 +16,9 @@ import Skills from '@/components/Skills.astro'
 	<ShortAbout name='Patrick Vreeburg' />
 	<Separator />
 	<Featured>
+		<BlogCard post={getPost("Smoke Simulation")} />
 		<ProjectCard project={getProject("Azura")} />
 		<ProjectCard project={getProject("Melvin")} />
-		<BlogCard post={getPost("Smoke Simulation")} />
 	</Featured>
 	<Separator />
 	<About />
