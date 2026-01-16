@@ -207,7 +207,7 @@ This equation is made up of the three following effects:
 To make the smoke look more 'smoke-like' I apply the noise functions proposed in the $\mathrm{Nubis}^3$ talk [^4]. For this, I take their [3D noise texture](https://bit.ly/NubisVoxelCloudPack) and sample it with the algorithm present in the sample's code.
 
 ## Performance
-With a reasonable 200x200x200 MAC grid system and 16 iterations of the pressure solver my simulation settled on an execution time of **TODO**ms.
+With a reasonable 128x128x128 MAC grid system and 16 iterations of the pressure solver my simulation settled on an execution time of 13.52ms. This amounts to 13.00ms of the MAC solver and 0.52ms of the raymarcher. Because of the fact that this is too slow to embed in a render pass, I suggest that you run this at a resolution of 128x128x128 is you're getting comparable results.
 
 During the project, I have made several significant optimisations to my fluid solver and rendering algorithm. These include:
 - More efficient use of GPU data types. These choices include using `half` over `float` or using `Texture3D` over a `StructuredBuffer` or `ByteAddressBuffer`.
