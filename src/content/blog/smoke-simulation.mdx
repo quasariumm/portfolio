@@ -14,7 +14,7 @@ After seeing the Coding Adventures series by Sebastian Lague on fluid simulation
 
 This post is aimed towards people with at minimum a basic game development aspiration and some basic math knowledge or at least the ability to read mathematical equations. 
 
-All interactive elements on this page are inspired by the wonderful visualisations from Sebastian. The web dev part is made with help from Claude, since my web development skills are not great at the time of writing. I recommend to read this on desktop to fully profit from these.
+All interactive elements on this page are inspired by the wonderful visualisations from Sebastian Lague. The web dev part is made with help from Claude, since my web development skills are not great at the time of writing. I recommend to read this on desktop to fully profit from the interactive elements.
 
 ## Notation
 This section is meant to clarify or explain certain mathematical notations. If you are familiar with them, feel free to skip this part.
@@ -25,7 +25,7 @@ $n\in\mathbb{N}$ means that the number $n$ is a positive integer.
 
 $|\vec{v}|$ denotes the length of vector $\vec{v}$
 
-$\frac{\partial q}{\partial x}$ is the partial derivative with respect to x. This can be seen as "the rate of change on the x axis" or in some cases "the difference in the x axis" (mostly used for velocities). For example for the velocity, it can be written out in code as
+$\frac{\partial q}{\partial x}$ is the partial derivative with respect to $x$. This can be seen as "the rate of change on the $x$ axis" or in some cases "the difference in the $x$ axis" (mostly used for velocities). For example for the velocity, it can be written out in code as
 
 ```hlsl
 float ddx = MAC::VelocityXBuffer[center + int3(1,0,0)] - MAC::VelocityXBuffer[center]
@@ -35,7 +35,7 @@ $\nabla q$ denotes the gradient. In 3D, this is $\left(\frac{\partial q}{\partia
 
 ## Simulation
 ### Grid
-At the core of the simulation lies a MAC grid storage system. A MAC grid is a kind of voxel grid storage technique where different values are stored at different positions in the grid. In my case, the grid has the pressures, cell types, temperature and concentration stored at the center of each cell, whereas the velocities are stored on the face centers of the cells. This means that the dimensions of the pressure and type buffers need to be $(N\times M\times P)$ where $M,N,P\in\mathbb{N}$ and the velocity component buffers need to have one extra entry in their respective axis to ensure all sides have values. I will follow the convention that any parameter $q$ at the center of cell $(i,j,k)$ in the grid can be written as $q_{i,j,k}$.
+At the core of the simulation lies a MAC grid storage system. A MAC grid is a kind of voxel grid storage technique where different values are stored at different positions in the grid. In my case, the grid has the pressures, cell types, temperature and concentration stored at the center of each cell, whereas the velocities are stored on the face centers of the cells. This means that the dimensions of the pressure and type buffers need to be $(N\times M\times P)$ where $M,N,P\in\mathbb{N}$. The velocity component buffers need to have one extra entry in their respective axis to ensure all sides have values. I will follow the convention that any parameter $q$ at the center of cell $(i,j,k)$ in the grid can be written as $q_{i,j,k}$.
 
 <figure>
     <img alt="MAC Grid" src="/blog-images/smoke-simulation/mac-grid.png"/>
@@ -90,7 +90,7 @@ This algorithm first computes the values for the even cells and then for the odd
 </figure>
 
 #### Velocity
-This is where the magic of the MAC grid comes to light. Since I have the pressure of all cell centers, getting the velocity simply using the pressure difference to alter the velocities. Written out for all axes:
+This is where the magic of the MAC grid comes to light. Since I have the pressure of all cell centers, getting the velocity is simply applying the pressure difference to alter the velocities. Written out for all axes:
 
 $$
 u_{i+1/2,j,k}=u_{i+1/2,j,k}-\Delta t\cdot\frac{p_{i,j,k}-p_{i-1,j,k}}{\rho\Delta x}
@@ -144,7 +144,7 @@ $$
 f_{b}=[\alpha s-\beta(T-T_{amb})]\vec{g}
 $$
 
-where $\alpha$ and $\beta$ ar non-zero constants that you can set to your liking, $T_{amb}=273\mathrm{K}$ and $\vec{g}=(0,-9.81,0)$
+where $\alpha$ and $\beta$ are non-zero constants that you can set to your liking, $T_{amb}=273\mathrm{K}$ and $\vec{g}=(0,-9.81,0)$.
 
 This mutual dependency makes sure that velocities are calculated around the concentration field to make sure that the advection can function properly.
 
@@ -155,7 +155,7 @@ $$
 \omega=\nabla\cdot\vec{u}
 $$
 
-whereafter that can be used to calculate the normalised vorticity location vector
+whereafter that can be used to calculate the normalised vorticity location vector:
 
 $$
 N=\frac{\eta}{\left|\eta\right|}\quad (\eta=\nabla\left|\omega\right|)
@@ -207,11 +207,11 @@ This equation is made up of the three following effects:
 To make the smoke look more 'smoke-like' I apply the noise functions proposed in the $\mathrm{Nubis}^3$ talk [^4]. For this, I take their [3D noise texture](https://bit.ly/NubisVoxelCloudPack) and sample it with the algorithm present in the sample's code.
 
 ## Performance
-With a reasonable 128x128x128 MAC grid system and 16 iterations of the pressure solver my simulation settled on an execution time of 13.52ms. This amounts to 13.00ms of the MAC solver and 0.52ms of the raymarcher. Because of the fact that this is too slow to embed in a render pass, I suggest that you run this at a resolution of 128x128x128 is you're getting comparable results.
+With a reasonable 128x128x128 MAC grid system and 16 iterations of the pressure solver my simulation settled on an execution time of 13.52ms. This amounts to 13.00ms of the MAC solver and 0.52ms of the raymarcher. Because of the fact that this is too slow to embed in a render pass, I suggest that you run this at a resolution of 128x128x128 if you're getting comparable results.
 
 During the project, I have made several significant optimisations to my fluid solver and rendering algorithm. These include:
 - More efficient use of GPU data types. These choices include using `half` over `float` or using `Texture3D` over a `StructuredBuffer` or `ByteAddressBuffer`.
-- Making use of caching. This gains very much in the fluid solver because of the large amount of times a certain pixel is sampled. For example, the part of the pressure equation that involves velocity (negative divergence) can easily be cached since it stays constant throughout the iterations, removing the need to calculate that each iteration of the solver.
+- Making use of caching. This is very effective in the fluid solver because of the large amount of times a certain pixel is sampled. For example, the part of the pressure equation that involves velocity (negative divergence) can easily be cached since it stays constant throughout the iterations, removing the need to calculate that each iteration of the solver.
 - Choosing the correct buffer type to minimise VRAM throughput.
 - Utilising the GPU optimally. In my raymarcher, it is significantly better to do the steps on the GPU instead of one dispatch per step. This also optimises away some buffers that were needed.
 - A thing that $\mathrm{Nubis}^3$ [^4] proposed is to take variable steps through the volume. This does mean that the initial values and step increments need to be chosen correctly. In the case of my smoke sim there needs to be proper handling of when the ray is near the edges of the bounds, since this can create precision artifacts when rendering. 
