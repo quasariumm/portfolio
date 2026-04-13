@@ -35,9 +35,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
 					currentPage: pageNum,
 					lastPage: totalPages,
 					url: {
-						current: `/blog/${pageNum}`,
-						prev: pageNum === 2 ? '/blog' : `/blog/${pageNum - 1}`,
-						next: pageNum < totalPages ? `/blog/${pageNum + 1}` : undefined,
+						current: `/projects/${pageNum}`,
+						prev: pageNum === 2 ? '/projects' : `/projects/${pageNum - 1}`,
+						next: pageNum < totalPages ? `/projects/${pageNum + 1}` : undefined,
 					}
 				}
 			}
@@ -72,7 +72,7 @@ const totalPages = page.lastPage || 1
 		</div>
 	</main>
 
-	<section class="app-container pb-20" aria-label="Blog posts">
+	<section class="app-container pb-20" aria-label="Projects">
 		<ul class="posts-grid-container" role="list">
 			{
 				page.data.map((project) => (

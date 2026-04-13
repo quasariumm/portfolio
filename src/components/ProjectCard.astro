@@ -66,22 +66,24 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
       </div>
     </div>
 
-    <a
-      href={`/projects/${project?.id}/`}
-      class="flex flex-col gap-3 h-full"
-      aria-label={`Read article: ${project?.data.title}`}
-    >
-      <h3
-        class="text-xl font-semibold group-hover:text-primary dark:group-hover:text-primary-dark transition-colors duration-150 line-clamp-1"
+    <div>
+      <a
+        href={`/projects/${project?.id}/`}
+        class="flex flex-col gap-3 h-full"
+        aria-label={`Read article: ${project?.data.title}`}
       >
-        {project?.data.title}
-      </h3>
-      <p
-        class="line-clamp-2 mb-12 text-subtext-1 dark:text-subtext-1-dark leading-relaxed text-sm"
-      >
-        {project?.data.description}
-      </p>
-    </a>
+        <h3
+          class="text-xl font-semibold group-hover:text-primary dark:group-hover:text-primary-dark transition-colors duration-150 line-clamp-1"
+        >
+          {project?.data.title}
+        </h3>
+        <p
+          class="line-clamp-2 mb-12 text-subtext-1 dark:text-subtext-1-dark leading-relaxed text-sm"
+        >
+          {project?.data.description}
+        </p>
+      </a>
+    </div>
 
     <!-- Tags (show first 4) -->
     {

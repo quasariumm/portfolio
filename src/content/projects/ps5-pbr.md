@@ -5,7 +5,7 @@ releaseDate: 'Oct 31 2025'
 category: 'BUas'
 tags: ['buas', 'bee', 'ps5', 'pbr']
 version: 'v1.0'
-language: 'C++, Shaders'
+language: 'C++, PS5 Shaders'
 engine: 'BEE'
 grade: 88
 ---

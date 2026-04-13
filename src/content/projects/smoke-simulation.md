@@ -7,7 +7,7 @@ tags: ['buas', 'mini-engine', 'dx12', 'simulation', 'compute']
 version: 'v1.0'
 language: 'C++, HLSL'
 engine: 'MiniEngine'
-grade: 88
+grade: 61
 ---
 
 See my [blog](/blog/smoke-simulation) for an in-depth look into thee physics and simulation. This page shows aspects related to the implementation.
