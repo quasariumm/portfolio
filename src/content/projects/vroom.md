@@ -8,6 +8,7 @@ tags: ['buas', 'custom-engine', 'bee', 'dx12', 'ps5', 'pbr']
 version: 'v1.0'
 language: 'C++, HLSL, PS5 Shaders, Python, GitHub Actions YAML'
 engine: 'BEE'
+grade: 72
 developers: [
     'Ayush Bhardwas|Enging & Tools Programmer',
     'David Boyd|Graphics Programmer',
