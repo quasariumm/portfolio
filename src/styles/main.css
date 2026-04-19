@@ -312,6 +312,25 @@ nav a {
 	@apply rounded-lg;
 }
 
+.prose table {
+  @apply rounded-lg overflow-hidden border border-border dark:border-border-dark
+         border-separate border-spacing-0 w-full;
+}
+
+.prose thead {
+  @apply bg-accent dark:bg-accent-dark;
+}
+
+.prose thead th {
+  @apply text-foreground-dark dark:text-foreground text-left px-4 py-2
+         border-r border-border-dark dark:border-border last:border-r-0;
+}
+
+.prose tbody td {
+  @apply py-2 px-4
+         border-r border-border-dark dark:border-border last:border-r-0;
+}
+
 /* Minimal custom scrollbar */
 ::-webkit-scrollbar {
 	width: 8px;
