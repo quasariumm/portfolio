@@ -7,9 +7,9 @@ interface Props {
 const { line_color = "--color-accent", text_color = "--color-primary" } = Astro.props;
 ---
 
-<div class="my-24 w-full h-2 flex justify-center items-center">
+<div class="my-24 w-full h-1 flex justify-center items-center">
     <div 
-        class="max-w-2xs sm:max-w-md md:max-w-2xl lg:max-w-3xl 2xl:max-w-7xl rounded-xs h-full w-full" 
+        class="max-w-xs sm:max-w-lg md:max-w-3xl lg:max-w-4xl 2xl:max-w-7xl rounded-xs h-full w-full" 
         style={`background-color: var(${line_color}); @media (prefers-color-scheme: dark) { background-color: var(${line_color}-dark); }`}
     ></div>
 </div>

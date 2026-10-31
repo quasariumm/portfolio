@@ -4,10 +4,11 @@ description: 'A racing-focused engine made by a team of 7 at BUas'
 coverImageCredit: 'Donna Weerdenburg'
 releaseDate: 'Apr 10 2026'
 category: 'BUas'
-tags: ['buas', 'custom-engine', 'bee', 'dx12', 'ps5', 'pbr']
+tags: ['custom-engine', 'dx12', 'ps5']
+state: 'Done'
 version: 'v1.0'
-language: 'C++, HLSL, PS5 Shaders, Python, GitHub Actions YAML'
-engine: 'BEE'
+languages: ['C++', 'HLSL', 'PS5 Shaders', 'Python', 'GitHub Actions YAML']
+engine: 'Custom (C++)'
 grade: 72
 developers: [
     'Ayush Bhardwas|Enging & Tools Programmer',

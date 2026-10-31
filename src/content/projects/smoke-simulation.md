@@ -3,9 +3,8 @@ title: 'DX12 Smoke simulator'
 description: 'Some simulation through HLSL compute shaders and ray marching'
 releaseDate: 'Jan 16 2026'
 category: 'BUas'
-tags: ['buas', 'mini-engine', 'dx12', 'simulation', 'compute']
-version: 'v1.0'
-language: 'C++, HLSL'
+tags: ['dx12', 'simulation', 'compute']
+languages: ['C++', 'HLSL']
 engine: 'MiniEngine'
 grade: 61
 ---

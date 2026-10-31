@@ -1,0 +1,76 @@
+---
+import { getCollection } from 'astro:content'
+import BaseLayout from '@/layouts/Layout.astro'
+import { Icon } from 'astro-icon/components'
+import ProjectCard from '@/components/ProjectCard.astro'
+import { language_icons } from '@/components/ProjectDetails.astro'
+
+export const prerender = true;
+
+export const slugify = (s: string) =>
+	s.toLowerCase().replace(/\+/g, 'p').replace(/#/g, 'sharp').replace(/\s+/g, '-')
+
+export async function getStaticPaths() {
+	const allProjects = await getCollection('projects', ({ data }) => data.draft !== true)
+
+	const bySlug = new Map<string, { language: string; posts: typeof allProjects }>()
+	for (const project of allProjects) {
+		for (const lang of project.data.languages ?? []) {
+			const slug = slugify(lang)
+			const entry = bySlug.get(slug) ?? { language: lang, posts: [] }
+			if (!entry.posts.includes(project)) entry.posts.push(project)
+			bySlug.set(slug, entry)
+		}
+	}
+
+	return [...bySlug].map(([slug, { language, posts }]) => ({
+		params: { language: slug },
+		props: {
+			language,
+			posts: posts.sort((a, b) => b.data.releaseDate.valueOf() - a.data.releaseDate.valueOf()),
+		},
+	}))
+}
+
+const { posts: projects, language } = Astro.props
+---
+
+<BaseLayout 
+	title={`${language} - Projects`}
+	description={`Browse all projects that use the language ${language}.`}
+>
+	<main class="app-container pt-32 pb-16">
+		<div class="space-y-6">
+			<!-- Back Link -->
+			<a 
+				href="/projects"
+				class="inline-flex items-center gap-2 text-secondary dark:text-secondary-dark hover:text-primary dark:hover:text-primary-dark transition-colors"
+			>
+				<Icon name="mdi:arrow-left" class="w-5 h-5" aria-hidden="true" />
+				<span>Back to all projects</span>
+			</a>
+
+			<!-- Header -->
+			<div class="space-y-4">
+				<h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+                    {Object.hasOwn(language_icons, language) && <i class={language_icons[language] + ""}></i> } {language}
+				</h1>
+				<p class="text-lg text-secondary dark:text-secondary-dark">
+					{projects.length} {projects.length === 1 ? 'project' : 'projects'} using this language
+				</p>
+			</div>
+		</div>
+	</main>
+
+	<section class="app-container pb-20" aria-label={`Posts using ${language}`}>
+		<ul class="posts-grid-container" role="list">
+			{
+				projects.map((project) => (
+					<li>
+						<ProjectCard project={project} />
+					</li>
+				))
+			}
+		</ul>
+	</section>
+</BaseLayout>

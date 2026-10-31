@@ -33,6 +33,7 @@ const page = {
 		current: '/blog',
 		prev: undefined,
 		next: totalPages > 1 ? '/blog/2' : undefined,
+		base: '/blog'
 	}
 }
 ---
@@ -70,6 +71,7 @@ const page = {
 			totalPages={totalPages}
 			prevUrl={page.url.prev}
 			nextUrl={page.url.next}
+			baseUrl={page.url.base}
 		/>
 	</section>
 </BaseLayout>

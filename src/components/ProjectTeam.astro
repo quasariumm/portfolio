@@ -1,0 +1,50 @@
+---
+import { Icon } from 'astro-icon/components'
+import DeveloperCard from './DeveloperCard.astro'
+
+interface Props {
+	developers: string[] | undefined
+}
+
+const { developers } = Astro.props
+
+const team = developers?.map((d) => {
+	const [name, role] = d.split('|').map((s) => s.trim())
+	return { name, role }
+})
+---
+
+{
+	team && (
+		<div class="w-full p-4 rounded-lg border border-border dark:border-border-dark bg-surface dark:bg-surface-dark">
+			<details open class="group">
+				<summary class="flex items-center gap-2 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+					<h3 class="text-foreground dark:text-foreground-dark">Team</h3>
+					<span
+						class="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full text-xs font-medium bg-accent/10 dark:bg-accent-dark/10 text-accent dark:text-accent-dark border border-accent/20 dark:border-accent-dark/20"
+						aria-label={`${team.length} team members`}
+					>
+						{team.length}
+					</span>
+                    <Icon
+						name="mdi:chevron-right"
+						class="size-5 shrink-0 transition-transform group-open:rotate-90"
+						aria-hidden="true"
+					/>
+				</summary>
+
+                <div class="mt-4">
+                    {team.map(({ name, role }) => (
+                        <div class="flex flex-col flex-wrap mb-4">
+                            {role && <p class="text-subtext-0 dark:text-subtext-0-dark">{role}</p>}
+                            <DeveloperCard developer={name}>
+                                <p class="text-lg">{name}</p>
+                            </DeveloperCard>
+                        </div>
+                    ))}
+                </div>
+
+			</details>
+		</div>
+	)
+}

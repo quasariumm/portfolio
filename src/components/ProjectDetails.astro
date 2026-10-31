@@ -1,24 +1,111 @@
 ---
+import { slugify as slugifyLanguage } from '@/pages/projects/language/[language].astro';
+import { Icon } from 'astro-icon/components';
+
 interface Props {
     version: string | undefined,
-    language: string | undefined,
+    state: string | undefined,
+    languages: string[] | undefined,
     engine: string | undefined,
-    developers: string[] | undefined,
-    grade: number | undefined
+    grade: number | undefined,
+    link_github: string | undefined,
+    link_itch: string | undefined,
+    link_steam: string | undefined,
 }
 
-const { version, language, engine, developers, grade } = Astro.props
+export const language_icons: Record<string, string> = {
+    "Bash": "devicon-bash-plain",
+    "C": "devicon-c-plain",
+    "CMake": "devicon-cmake-plain",
+    "C++": "devicon-cplusplus-plain",
+    "CSharp": "devicon-csharp-plain",
+    "CSS": "devicon-css-plain",
+    "Git": "devicon-git-plain",
+    "GitHub Actions YAML": "devicon-github-plain",
+    "Go": "devicon-go-plain",
+    "HTML": "devicon-html5-plain",
+    "Java": "devicon-java-plain",
+    "Javascript": "devicon-javascript-plain",
+    "JSON": "devicon-json-plain",
+    "Kotlin": "devicon-kotlin-plain",
+    "Lua": "devicon-lua-plain",
+    "PHP": "devicon-php-plain",
+    "Powershell": "devicon-powershell-plain",
+    "Python": "devicon-python-plain",
+    "Rust": "devicon-rust-plain",
+    "Typescript": "devicon-typescript-plain",
+    "Unreal C++": "devicon-unreal-engine-plain",
+};
+
+const { version, state, languages, engine, grade, link_github, link_itch, link_steam } = Astro.props
 ---
 
-<div class="w-full flex flex-col p-4 rounded-lg border border-border dark:border-border-dark">
-    <h2 class="text-xs font-semibold uppercase tracking-wide mb-3 text-foreground dark:text-foreground-dark">Details</h2>
-    { grade && <p><span class="text-green dark:text-green-dark">Grade</span>: {(grade / 10).toFixed(1)}</p> }
-    { version && <p><span class="text-green dark:text-green-dark">Version</span>: {version}</p> }
-    { language && <p><span class="text-teal dark:text-teal-dark">Language(s)</span>: {language}</p> }
-    { engine && <p><span class="text-sky dark:text-sky-dark">Engine</span>: {engine}</p> }
-    { developers && <p><span class="text-sapphire dark:text-sapphire-dark">Developers</span>:</p><table class="table-auto rounded-lg border border-separate border-border dark:border-border-dark">
-        <thead class="bg-crust dark:bg-crust-dark"><td class="px-2">Name</td><td>Role</td></thead>{developers.map((author) => {
-        var a = author.split('|');
-        return <tr><td class="px-2">{a[0]}</td><td>{a[1]}</td></tr>;
-    })}</table> }
+<div class="w-full flex flex-col p-4 rounded-lg border border-border dark:border-border-dark bg-surface dark:bg-surface-dark">
+    <h3 class="text-xs font-semibold tracking-wide mb-3 text-foreground dark:text-foreground-dark">Details</h3>
+    
+    { state && <div class="pb-2">
+        <span class="text-subtext-0 dark:text-subtext-0-dark">State</span><br/>
+        <span class="text-lg">{state} {version && <span>({version})</span>}</span>
+    </div> }
+    
+    { engine && <div class="pb-2">
+        <span class="text-subtext-0 dark:text-subtext-0-dark">Engine</span><br/>
+        <span class="text-lg">{engine}</span>
+    </div> }
+    
+    { languages && <div class="pb-2">
+        <span class="text-subtext-0 dark:text-subtext-0-dark">Languages</span><br/>
+        <div class="pt-2 pb-4 flex flex-row flex-wrap gap-2">
+            { languages.map((language: string) => {
+                const languageSlug = slugifyLanguage(language)
+                return (
+                    <a
+                        href={`/projects/language/${languageSlug}`}
+                        class="text-lg whitespace-nowrap px-3 py-1 rounded-full text-sm bg-accent/10 dark:bg-accent-dark/10 text-accent dark:text-accent-dark border border-accent/20 dark:border-accent-dark/20 hover:bg-accent/20 dark:hover:bg-accent-dark/20 transition-colors"
+                    >
+                        {Object.hasOwn(language_icons, language) && <i class={language_icons[language]}></i>} {language}
+                    </a>
+                )
+            }) }
+        </div>
+    </div> }
+    
+    { grade && <div class="pb-2">
+        <span class="text-subtext-0 dark:text-subtext-0-dark">Grade</span><br/>
+        <span class="text-lg">{(grade / 10).toFixed(1)}</span>
+    </div> }
+    
+    { (link_github || link_itch || link_steam) && <div class="pb-2">
+        <p class="pb-2 text-subtext-0 dark:text-subtext-0-dark">Links</p>
+        { link_github && (
+            <a
+                href={link_github}
+                class="inline-flex items-center gap-2 whitespace-nowrap px-3 py-1 rounded-full text-lg bg-accent/10 dark:bg-accent-dark/10 text-accent dark:text-accent-dark border border-accent/20 dark:border-accent-dark/20 hover:bg-accent/20 dark:hover:bg-accent-dark/20 transition-colors"
+            >
+                <Icon name="github" class="size-4 shrink-0" aria-hidden="true" />
+                <span>Source on GitHub</span>
+                <Icon name="mdi:open-in-new" class="size-3.5 shrink-0 opacity-70" aria-hidden="true" />
+            </a>
+        ) }
+        { link_itch && (
+            <a
+                href={link_itch}
+                class="inline-flex items-center gap-2 whitespace-nowrap px-3 py-1 rounded-full text-lg bg-accent/10 dark:bg-accent-dark/10 text-accent dark:text-accent-dark border border-accent/20 dark:border-accent-dark/20 hover:bg-accent/20 dark:hover:bg-accent-dark/20 transition-colors"
+            >
+                <Icon name="itchio" class="size-4 shrink-0" aria-hidden="true" />
+                <span>Itch.io page</span>
+                <Icon name="mdi:open-in-new" class="size-3.5 shrink-0 opacity-70" aria-hidden="true" />
+            </a>
+        ) }
+        { link_steam && (
+            <a
+                href={link_steam}
+                class="inline-flex items-center gap-2 whitespace-nowrap px-3 py-1 rounded-full text-lg bg-accent/10 dark:bg-accent-dark/10 text-accent dark:text-accent-dark border border-accent/20 dark:border-accent-dark/20 hover:bg-accent/20 dark:hover:bg-accent-dark/20 transition-colors"
+            >
+                <Icon name="github" class="size-4 shrink-0" aria-hidden="true" />
+                <span>Steam page</span>
+                <Icon name="mdi:open-in-new" class="size-3.5 shrink-0 opacity-70" aria-hidden="true" />
+            </a>
+        ) }
+    </div> }
 </div>

@@ -38,6 +38,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 						current: `/projects/${pageNum}`,
 						prev: pageNum === 2 ? '/projects' : `/projects/${pageNum - 1}`,
 						next: pageNum < totalPages ? `/projects/${pageNum + 1}` : undefined,
+						base: '/projects'
 					}
 				}
 			}
@@ -89,6 +90,7 @@ const totalPages = page.lastPage || 1
 			totalPages={totalPages}
 			prevUrl={page.url.prev}
 			nextUrl={page.url.next}
+			baseUrl={page.url.base}
 		/>
 	</section>
 </BaseLayout>

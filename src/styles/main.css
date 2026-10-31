@@ -70,8 +70,8 @@
 	/* Semantic color mappings - Minimal approach */
 	--color-foreground: var(--color-text);
 	--color-foreground-dark: var(--color-text-dark);
-	--color-background: var(--color-base);
-	--color-background-dark: var(--color-base-dark);
+	--color-background: var(--color-crust);
+	--color-background-dark: var(--color-crust-dark);
 	
 	/* Primary: Blue - Calming and professional */
 	--color-primary: var(--color-sapphire);
@@ -87,7 +87,7 @@
 	
 	/* Surface colors for elevated elements - Minimal elevation */
 	--color-surface: var(--color-mantle);
-	--color-surface-dark: var(--color-surface-0-dark);
+	--color-surface-dark: var(--color-mantle-dark);
 	
 	/* Border colors - Subtle and refined */
 	--color-border: var(--color-surface-0);

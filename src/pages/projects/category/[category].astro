@@ -55,13 +55,13 @@ const { posts: projects, category } = Astro.props
 					{category}
 				</h1>
 				<p class="text-lg text-secondary dark:text-secondary-dark">
-					{projects.length} {projects.length === 1 ? 'post' : 'posts'} in this category
+					{projects.length} {projects.length === 1 ? 'project' : 'projects'} in this category
 				</p>
 			</div>
 		</div>
 	</main>
 
-	<section class="app-container pb-20" aria-label={`Posts in ${category} category`}>
+	<section class="app-container pb-20" aria-label={`Projects in ${category} category`}>
 		<ul class="posts-grid-container" role="list">
 			{
 				projects.map((project) => (

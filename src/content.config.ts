@@ -32,13 +32,14 @@ const projects = defineCollection({
 		category: z.string().default('Uncategorized'),
 		tags: z.array(z.string()).default([]),
 		draft: z.boolean().default(false),
+		state: z.string().optional(),
 		// Links
 		link_github: z.string().optional(),
 		link_itch: z.string().optional(),
 		link_steam: z.string().optional(),
 		// Game-specific
 		version: z.string().optional(),
-		language: z.string().optional(),
+		languages: z.array(z.string()).optional(),
 		engine: z.string().optional(),
 		developers: z.string().array().optional(),
 		grade: z.coerce.number().optional()

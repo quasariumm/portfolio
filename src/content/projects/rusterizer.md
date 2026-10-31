@@ -3,13 +3,15 @@ title: 'Rusterizer'
 description: 'A software rasterizer made in Rust for the masterclass hosted by Luca Quartesan and Traverse Research.'
 releaseDate: 'Feb 9 2026'
 category: 'Personal'
-tags: ['rust', 'traverse-research', 'software-raster', 'multi-threaded']
+tags: ['custom-engine', 'software-raster', 'multi-threaded']
+state: 'Released'
 version: 'v1.0'
-language: 'Rust'
+languages: ['Rust']
 link_github: 'https://github.com/quasariumm/rusterizer'
 ---
 
 ## Overview
+
 Over a period of 3 weeks I worked on making a software raterizer in Rust. The first three days of this consisted of a masterclass held at BUas presented by [Luca Quartesan](https://www.linkedin.com/in/luca-quartesan/). In this masterclass I learned the basics before I was let loose to do my own things.
 
 <iframe width="100%" height="auto"
@@ -17,15 +19,19 @@ src="https://www.youtube.com/embed/oLQ54aqasUE?loop=1&autoplay=1&mute=1" allowfu
 </iframe>
 
 There was a competition tied to this project, which I won. As a prize I got this beautiful 3D printed trophy
+
 <img alt="Profiling baseline" src="/project-images/rusterizer/trophy.jpeg"/>
 
 ## The engine
+
 I made my own rasterisation engine as a crate for which the idea was to have a module that holds an interface for an app that the user can define their own functions in and a set of basic types related to rendering. A basic explanation of all features can be seen on the [GitHub repo](https://github.com/quasariumm/rusterizer).
 
 I'll go into more detail here on a couple of aspects here.
 
 ### Textures
+
 My idea with textures and samplers was to mimic the GPU structs as much as possible. That's why I also made a system that supports a huge variety of texture formats. I achieved this by making use of Enums:
+
 ```rs
 pub enum TextureDataHolder<T> {
     Linear(Vec<Vec<T>>),
@@ -42,7 +48,9 @@ pub enum TextureData {
     U128(TextureDataHolder<u128>),
 }
 ```
+
 The container type is then determined with
+
 ```rs
 let unpacked_format = unpack_format(config.format);
 
@@ -51,7 +59,9 @@ let data_size = (unpacked_format.0.component_count() * unpacked_format.1.byte_si
 ```
 
 ### Tiled rendering
+
 To achieve tiled rendering properly I needed to optimise the time each bin took to process. I noticed that my main bottleneck was the locking of a mutex. This led to me creating what I call my least sane Rust struct to date
+
 ```rs
 #[derive(Debug)]
 pub struct UnsafeHandle<T> {
@@ -60,7 +70,9 @@ pub struct UnsafeHandle<T> {
     phantom: PhantomData<T>,
 }
 ```
+
 I read and write to this by casting the `handle` from and to pointers
+
 ```rs
 pub unsafe fn read(&self) -> &T {
     unsafe { (self.handle as *const T).as_ref().unwrap() }
@@ -73,6 +85,7 @@ pub unsafe fn write(&self) -> &mut T {
 ```
 
 For my triangle binning struct I also had to cast to and from `usize` to get optimal performance on all threads
+
 ```rs
 rayon::scope(|s| {
     let bins = self.triangle_bins.as_mut_ptr();

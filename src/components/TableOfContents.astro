@@ -25,8 +25,8 @@ for (const heading of headings) {
 
 {
 	toc.length > 0 ? (
-		<nav class="p-4 rounded-lg border border-border dark:border-border-dark" aria-label="Table of contents">
-			<h2 class="text-xs font-semibold uppercase tracking-wide mb-3 text-foreground dark:text-foreground-dark">On This Page</h2>
+		<nav class="p-4 rounded-lg border border-border bg-surface dark:border-border-dark dark:bg-surface-dark" aria-label="Table of contents">
+			<h3 class="text-xs font-semibold tracking-wide mb-3 text-foreground dark:text-foreground-dark">On this page</h3>
 			<ul class="space-y-1.5 text-sm" role="list">
 				{toc.map((h2) => (
 					<li>
