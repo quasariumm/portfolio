@@ -1,0 +1,89 @@
+---
+title: 'Spline Toolkit'
+description: 'A procedural generation tool to make infrastructure along splines.'
+coverImageCredit: 'Patrick Vreeburg'
+releaseDate: 'Oct 30 2026'
+category: 'BUas'
+tags: ['team-project', 'unreal-engine', 'splines', 'pcg']
+link_github: 'https://github.com/QuillanW/Unreal-Spline-Extruder'
+state: 'Released'
+version: 'v1.0'
+languages: ['C++']
+engine: 'Unreal Engine 5.8'
+developers: [
+    'Quillan Wielhouwer|Editor Tools & Instantiation',
+    'Patrick Vreeburg|Extrusion & Intersection',
+]
+---
+
+import Carousel from '@/components/Carousel.astro';
+
+## My contributions
+
+- [Spline extruder](#spline-extruder)
+- [Intersection solver](#intersection-solver)
+- [Intersection filling](#intersection-filling)
+
+## Overview
+
+The first block of my third year at BUas consisted of making a tool for Unreal Engine to solve a problem. In our case the problem was that no free spline-based PCG tools were available that were focused on infrastructure. Since we both like trains, we focused our tool on making rail networks.
+
+In the end we made a tool that can both instantiate and extrude models along the `USplineComponent`. A couple screenshots of the demo:
+
+<Carousel>
+    <img src="/project-images/spline-toolkit/demo_image2.png" />
+    <img src="/project-images/spline-toolkit/demo_image1.png" />
+</Carousel>
+
+> Model credits: Patrick Vreeburg, Quillan Wielhouwer, Tushar Chitan, Multiple Sketchfab users
+
+## In depth
+
+### Spline extruder
+
+Since the up-vectors of a spline in Unreal are not per se accurate I implemented an RMF sampler based on the [paper from Wang et al.](https://dl.acm.org/doi/epdf/10.1145/1330511.1330513).
+
+To apply this to the spline I first input a model that has a slice of vertices at the origin XZ plane. I then in the code extract those vertices and reorder them to be in a loop. Finally, I instantiate one of those loops for each RMF sample and connect them to each other to form a mesh.
+
+![Correct RMF extrusion](/project-images/spline-toolkit/rmf_extrusion.png)
+
+### Intersection solver
+
+Each time the spline is updated, an intersection solver determines where the splines intersect and give an area back. The midpoint of the intersection is the point where the two splines _should_ be completely overlapping.
+
+The solver first prunes all splines and segments that don't overlap through simple AABB checks. Then, it takes a pre-determined amount of samples along the spline. When the distance between the two points is smaller than two times the size of the tested model, that sample is included in the range. Eventually when all samples have been checked, all intersecting samples get merged into areas. The midpoint can then be calculated with the following weight function:
+
+$$
+w_n=e^{\frac{-\left|P_b-P_a\right|^2}{2\cdot\sigma}}, \sigma = \frac{1}{4}\cdot r^2
+$$
+
+$$
+w_{total}=\sum_{n=0}^{N}w_n
+$$
+
+$$
+M=\frac{1}{w_{total}}\cdot\left(\sum_{n=0}^{N}w_n\cdot P_{a,n}\right)
+$$
+
+where $r$ is the model's radius and $P_a$ and $P_b$ are the sampled points on spline A and spline B.
+
+### Intersection filling
+
+To fill in the intersected areas I first determine all points where the rules overlap. I do this in the same way as the spline-based intersection algorithm.
+
+Then, the user can add connection rules. These rules hold the mesh that they belong to, where it should start, where it should end and how the tangent should be overridden. Tangents can either be unaffected, facing the other spline or facing halfway to any other rule that starts/ends at the same point.
+
+Finally, the tool creates new `USplineComponent` instances that follow the rules that the user configured. For this, I take a _sub-spline_, which can easily be calculated using positions and tangents only. Below is a visualisation in which you can play around with it a little.
+
+<iframe
+  src="https://www.geogebra.org/material/iframe/id/gzjvqtba/width/800/height/600/border/e4e4e4/sfsb/true/ctl/true"
+  width="800"
+  height="600"
+  allowfullscreen
+  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+  style="border: 1px solid #e4e4e4; border-radius: 4px;"
+></iframe>
+
+In the image below I combined everything I worked on to make a railway crossing. A more sophisticated demo scene can be found on the GitHub repo.
+
+![Intersection filling](/project-images/spline-toolkit/filling.png)

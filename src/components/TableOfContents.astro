@@ -1,5 +1,6 @@
 ---
 import type { MarkdownHeading } from 'astro'
+import { Icon } from 'astro-icon/components'
 
 interface Props {
 	headings: MarkdownHeading[]
@@ -25,31 +26,65 @@ for (const heading of headings) {
 
 {
 	toc.length > 0 ? (
-		<nav class="p-4 rounded-lg border border-border bg-surface dark:border-border-dark dark:bg-surface-dark" aria-label="Table of contents">
-			<h3 class="text-xs font-semibold tracking-wide mb-3 text-foreground dark:text-foreground-dark">On this page</h3>
-			<ul class="space-y-1.5 text-sm" role="list">
-				{toc.map((h2) => (
-					<li>
-						<a class="text-foreground dark:text-foreground-dark hover:text-primary dark:hover:text-primary-dark transition-colors duration-150 underline decoration-1 underline-offset-2 decoration-border dark:decoration-border-dark hover:decoration-primary dark:hover:decoration-primary-dark" href={`#${h2.slug}`}>
-							{h2.text}
-						</a>
-						{h2.children.length > 0 && (
-							<ul class="ml-3 mt-1.5 space-y-1.5 border-l border-border dark:border-border-dark pl-3" role="list">
-								{h2.children.map((h3) => (
-									<li>
-										<a
-											class="text-sm text-foreground dark:text-foreground-dark hover:text-primary dark:hover:text-primary-dark transition-colors duration-150 underline decoration-1 underline-offset-2 decoration-border dark:decoration-border-dark hover:decoration-primary dark:hover:decoration-primary-dark"
-											href={`#${h3.slug}`}
-										>
-											{h3.text}
-										</a>
-									</li>
-								))}
-							</ul>
-						)}
-					</li>
-				))}
-			</ul>
+		<nav class="rounded-lg border border-border bg-surface dark:border-border-dark dark:bg-surface-dark" aria-label="Table of contents">
+			{/* `open` keeps it usable without JS; the script closes it below lg */}
+			<details class="toc group p-4" open>
+				<summary class="flex items-center justify-between gap-2 cursor-pointer lg:cursor-default list-none [&::-webkit-details-marker]:hidden">
+					<h3 class="text-xs font-semibold tracking-wide text-foreground dark:text-foreground-dark">On This Page</h3>
+					<Icon
+						name="mdi:chevron-down"
+						class="size-5 lg:hidden transition-transform duration-150 group-open:rotate-180"
+						aria-hidden="true"
+					/>
+				</summary>
+				<ul class="mt-3 space-y-1.5 text-sm" role="list">
+					{toc.map((h2) => (
+						<li>
+							<a class="text-foreground dark:text-foreground-dark hover:text-primary dark:hover:text-primary-dark transition-colors duration-150 underline decoration-1 underline-offset-2 decoration-border dark:decoration-border-dark hover:decoration-primary dark:hover:decoration-primary-dark" href={`#${h2.slug}`}>
+								{h2.text}
+							</a>
+							{h2.children.length > 0 && (
+								<ul class="ml-3 mt-1.5 space-y-1.5 border-l border-border dark:border-border-dark pl-3" role="list">
+									{h2.children.map((h3) => (
+										<li>
+											<a
+												class="text-sm text-foreground dark:text-foreground-dark hover:text-primary dark:hover:text-primary-dark transition-colors duration-150 underline decoration-1 underline-offset-2 decoration-border dark:decoration-border-dark hover:decoration-primary dark:hover:decoration-primary-dark"
+												href={`#${h3.slug}`}
+											>
+												{h3.text}
+											</a>
+										</li>
+									))}
+								</ul>
+							)}
+						</li>
+					))}
+				</ul>
+			</details>
 		</nav>
 	) : null
 }
+
+<script>
+	// Matches Tailwind's `lg` (64rem)
+	const desktop = matchMedia('(min-width: 64rem)')
+
+	document.querySelectorAll<HTMLDetailsElement>('details.toc').forEach((details) => {
+		const summary = details.querySelector('summary')!
+
+		const sync = () => {
+			// Always open on desktop, collapsed by default below it
+			details.open = desktop.matches
+			// Not a control on desktop, so keep it out of the tab order
+			summary.tabIndex = desktop.matches ? -1 : 0
+		}
+
+		// Enter/Space on a summary also fire `click`, so this blocks the keyboard too
+		summary.addEventListener('click', (e) => {
+			if (desktop.matches) e.preventDefault()
+		})
+
+		sync()
+		desktop.addEventListener('change', sync)
+	})
+</script>

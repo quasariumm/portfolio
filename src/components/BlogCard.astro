@@ -59,7 +59,7 @@ const firstTagSlug = firstTag?.toLowerCase().replace(/\s+/g, "-");
           blogImages[coverImagePath] && <Image
             src={blogImages[coverImagePath]()}
             alt={`Cover image for ${post?.data.title}`}
-            class="z-9 absolute -inset-[4px] object-cover mask-clip-border border-4 border-white/0 rounded-t-4xl"
+            class="no-enlarge z-9 absolute -inset-[4px] object-cover mask-clip-border border-4 border-white/0 rounded-t-4xl"
             style="height: calc(100% + 4 * var(--spacing) + 8px); width: calc(100% + 8px); top: calc(-4 * var(--spacing) - px); max-width: 200% !important"
           />
         }

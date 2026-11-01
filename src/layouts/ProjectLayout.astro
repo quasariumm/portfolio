@@ -77,27 +77,25 @@ const categorySlug = category?.toLowerCase().replace(/\s+/g, '-') || 'uncategori
 			<div
 				class="app-container flex flex-col lg:flex-row-reverse justify-between gap-8 py-24 relative"
 			>
-				<aside class="md:w-1/4 relative" aria-label="Table of contents">
-					<div class="sticky top-0 md:top-28 hidden lg:block">
+				<aside class="w-full md:w-1/4 relative" aria-label="Table of contents">
+					<div class="sticky top-0 md:top-28 block">
 						<div class="flex flex-col gap-4">
-							<ProjectDetails version={version} state={state} languages={languages} engine={engine} grade={grade} link_github={link_github} link_itch={link_itch} link_steam={link_steam} />
-							<ProjectTeam developers={developers} />
+							<div class="hidden md:block"><ProjectDetails version={version} state={state} languages={languages} engine={engine} grade={grade} link_github={link_github} link_itch={link_itch} link_steam={link_steam} /></div>
+							<div class="hidden md:block"><ProjectTeam developers={developers} /></div>
 							<TableOfContents headings={headings} />
 						</div>
 					</div>
 				</aside>
+
 				<div class="grow w-full md:max-w-[100ch]">
 					<header class="space-y-6">
 						<div class:list={['grid rounded-2xl overflow-hidden', projectImages[coverImagePath] && 'shadow-xl']}>
 							{projectImages[coverImagePath] && (
-								<button
-									type="button"
-									data-cover-open
-									aria-label="Enlarge cover image"
-									class="col-start-1 row-start-1 block w-full h-full cursor-zoom-in"
+								<div
+									class="col-start-1 row-start-1 block w-full h-full"
 								>
 									<Image src={projectImages[coverImagePath]()} alt="" class="w-full h-full object-cover" />
-								</button>
+								</div>
 							)}
 
 							<div
@@ -121,23 +119,6 @@ const categorySlug = category?.toLowerCase().replace(/\s+/g, '-') || 'uncategori
 								)}
 							</div>
 						</div>
-
-						{projectImages[coverImagePath] && (
-							<dialog
-								data-cover-dialog
-								aria-label={`Cover image for ${title}`}
-								class="m-auto p-0 max-w-[95vw] max-h-[95vh] bg-transparent backdrop:bg-black/80 backdrop:backdrop-blur-sm"
-							>
-								<Image src={projectImages[coverImagePath]()} alt="" class="max-w-[95vw] max-h-[95vh] w-auto h-auto rounded-lg cursor-zoom-out" />
-							</dialog>
-						)}
-
-						<script>
-							const dialog = document.querySelector<HTMLDialogElement>('[data-cover-dialog]')
-							document.querySelector('[data-cover-open]')?.addEventListener('click', () => dialog?.showModal())
-							// Any click closes: the image fills the dialog, so this covers backdrop and image
-							dialog?.addEventListener('click', () => dialog.close())
-						</script>
 
 						<!-- Category and Tags -->
 						{(category || (tags && tags.length > 0)) && (
@@ -195,6 +176,12 @@ const categorySlug = category?.toLowerCase().replace(/\s+/g, '-') || 'uncategori
 						class="prose prose-neutral prose-lg md:prose-xl dark:prose-invert prose-img:rounded-2xl prose-figure:text-center prose-img:mx-auto prose-img:shadow-lg prose-headings:font-bold prose-a:text-primary dark:prose-a:text-primary-dark prose-a:underline prose-a:decoration-2 prose-a:decoration-primary/40 dark:prose-a:decoration-primary-dark/40 prose-a:underline-offset-2 hover:prose-a:decoration-primary dark:hover:prose-a:decoration-primary-dark mt-12"
 					>
 						<slot />
+					</div>
+
+					<!-- Mobile: Project details + Team -->
+					<div class="flex flex-col gap-4 block md:hidden">
+						<ProjectDetails version={version} state={state} languages={languages} engine={engine} grade={grade} link_github={link_github} link_itch={link_itch} link_steam={link_steam} />
+						<ProjectTeam developers={developers} />
 					</div>
 
 					<!-- Suggest edit -->

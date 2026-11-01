@@ -49,8 +49,9 @@ const { version, state, languages, engine, grade, link_github, link_itch, link_s
     </div> }
     
     { engine && <div class="pb-2">
-        <span class="text-subtext-0 dark:text-subtext-0-dark">Engine</span><br/>
-        <span class="text-lg">{engine}</span>
+        <p class="text-subtext-0 dark:text-subtext-0-dark">Engine</p>
+        { engine.startsWith("Unreal Engine") && <p class="mb-2"><i class="devicon-unrealengine-plain"></i> {engine}</p> }
+        { engine.startsWith("Custom") && <div class="inline-flex items-center gap-2 pb-2"><Icon name="mdi:wrench" class="size-4 shrink-0" /><span>{engine}</span></span> }
     </div> }
     
     { languages && <div class="pb-2">

@@ -1,0 +1,74 @@
+---
+import { Icon } from 'astro-icon/components'
+---
+
+<dialog
+	data-lightbox
+	aria-label="Enlarged image"
+	class="m-auto p-0 overflow-hidden rounded-lg bg-transparent max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] backdrop:bg-crust/80 dark:backdrop:bg-crust-dark/85 backdrop:backdrop-blur-sm"
+>
+	<img alt="" class="block max-w-full max-h-[calc(100dvh-2rem)] object-contain cursor-zoom-out" />
+	<form method="dialog" class="absolute top-2 right-2">
+		<button
+			aria-label="Close"
+			class="size-9 grid place-items-center rounded-full bg-base/80 dark:bg-base-dark/80 text-foreground dark:text-foreground-dark backdrop-blur-sm cursor-pointer transition-colors hover:text-primary dark:hover:text-primary-dark"
+		>
+			<Icon name="mdi:close" class="size-5" aria-hidden="true" />
+		</button>
+	</form>
+</dialog>
+
+<style is:global>
+	/* Keep in sync with SELECTOR in the script below */
+	img:not(.no-enlarge, a img, button img, dialog img) {
+		cursor: zoom-in;
+	}
+	dialog[data-lightbox][open] {
+		animation: fade-in 0.2s ease-out;
+	}
+	body:has(dialog[data-lightbox][open]) {
+		overflow: hidden;
+	}
+</style>
+
+<script>
+	const dialog = document.querySelector<HTMLDialogElement>('dialog[data-lightbox]')!
+	const full = dialog.querySelector('img')!
+
+	// Opt-out via `.no-enlarge`. Linked/button images keep their own behaviour,
+	// and images inside any dialog (including this one) are excluded.
+	const SELECTOR = 'img:not(.no-enlarge, a img, button img, dialog img)'
+	const enlargeable = (target: EventTarget | null) =>
+		(target as Element | null)?.closest?.<HTMLImageElement>(SELECTOR) ?? null
+
+	const open = (img: HTMLImageElement) => {
+		// `data-full` lets an image point at a higher-res source than the one rendered
+		full.src = img.dataset.full ?? img.currentSrc
+		full.alt = img.alt
+		dialog.showModal()
+	}
+
+	document.querySelectorAll<HTMLImageElement>(SELECTOR).forEach((img) => {
+		img.tabIndex = 0
+		img.setAttribute('role', 'button')
+		img.setAttribute('aria-label', img.alt ? `Enlarge image: ${img.alt}` : 'Enlarge image')
+	})
+
+	document.addEventListener('click', (e) => {
+		const img = enlargeable(e.target)
+		if (img) open(img)
+	})
+
+	document.addEventListener('keydown', (e) => {
+		if (e.key !== 'Enter' && e.key !== ' ') return
+		const img = enlargeable(e.target)
+		if (!img) return
+		e.preventDefault()
+		open(img)
+	})
+
+	// Padding is 0, so a click on the dialog itself is a backdrop click
+	dialog.addEventListener('click', (e) => {
+		if (e.target === dialog || e.target === full) dialog.close()
+	})
+</script>
